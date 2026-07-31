@@ -1,0 +1,183 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function existing() { return resource.data; }
+    function incoming() { return request.resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function getUserRole() {
+      let path = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(path) ? get(path).data.role : 'none';
+    }
+    function isAdmin() { return isSignedIn() && getUserRole() == 'admin'; }
+    function isManagement() { return isSignedIn() && (getUserRole() == 'management' || getUserRole() == 'admin'); }
+    function isStaff() { return isSignedIn() && getUserRole() != 'none'; }
+    
+    // User validation
+    function isValidUser(data) {
+      return (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 200)) &&
+             data.role is string && data.role in ['admin', 'management', 'it_assistant', 'staff'] &&
+             data.status is string && data.status in ['active', 'disabled'] &&
+             data.keys().hasAll(['role', 'status', 'createdAt', 'updatedAt']);
+    }
+
+    // Ticket validation
+    function isValidTicket(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 2000 &&
+             data.status is string && data.status in ['open', 'in_progress', 'resolved', 'closed'] &&
+             (!('priority' in data) || data.priority in ['low', 'medium', 'high', 'critical']) &&
+             (!('supportType' in data) || data.supportType in ['hardware', 'software', 'network', 'account', 'other']) &&
+             (!('ticketCode' in data) || (data.ticketCode is string && data.ticketCode.size() <= 10)) &&
+             (!('requestUsername' in data) || data.requestUsername is string) &&
+             (!('requestDept' in data) || data.requestDept is string) &&
+             (!('authorId' in data) || (data.authorId is string && data.authorId.size() > 0)) &&
+             (!('assigneeId' in data) || data.assigneeId is string) &&
+             (!('history' in data) || data.history is list) &&
+             data.keys().hasAll(['title', 'description', 'status', 'createdAt', 'updatedAt']);
+    }
+
+    // Repair validation
+    function isValidRepair(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             (!('repairCode' in data) || (data.repairCode is string && data.repairCode.size() <= 10)) &&
+             data.device is string && data.device.size() <= 200 &&
+             data.status is string && data.status in ['pending', 'ongoing', 'completed'] &&
+             data.history is list && data.history.size() <= 50 &&
+             (!('completionDate' in data) || data.completionDate is string) &&
+             (!('mechanicId' in data) || data.mechanicId is string) &&
+             (!('shopCenterName' in data) || data.shopCenterName is string) &&
+             (!('reportedIssues' in data) || data.reportedIssues is string) &&
+             data.keys().hasAll(['title', 'device', 'status', 'history', 'createdAt', 'updatedAt']);
+    }
+
+    // CalendarEvent validation
+    function isValidEvent(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.startTime is string && data.startTime.size() > 0 &&
+             data.endTime is string && data.endTime.size() > 0 &&
+             (!('dueDate' in data) || data.dueDate is string) &&
+             (!('eventType' in data) || data.eventType in ['standard', 'maintenance', 'urgent']) &&
+             (!('assigneeId' in data) || data.assigneeId is string) &&
+             (!('description' in data) || data.description is string) &&
+             (!('location' in data) || data.location is string) &&
+             data.status is string && data.status in ['scheduled', 'in_progress', 'resolved', 'cancelled'] &&
+             data.keys().hasAll(['title', 'startTime', 'endTime', 'status', 'createdAt', 'updatedAt']);
+    }
+
+    // SoftwareLicense validation
+    function isValidSoftwareLicense(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.type is string && data.type in ['domain', 'server', 'ms_license', 'other'] &&
+             data.status is string && data.status in ['active', 'expiring_soon', 'expired'] &&
+             data.expiryDate is string && data.expiryDate.size() > 0 &&
+             (!('notes' in data) || data.notes is string) &&
+             (!('details' in data) || data.details is string) &&
+             (!('licenseKey' in data) || data.licenseKey is string) &&
+             data.authorId is string && data.authorId.size() > 0 &&
+             data.keys().hasAll(['name', 'type', 'status', 'expiryDate', 'authorId', 'createdAt', 'updatedAt']);
+    }
+
+    // ISPAccount validation
+    function isValidISPAccount(data) {
+      return data.ispName is string && data.ispName.size() > 0 && data.ispName.size() <= 200 &&
+             data.branchOffice is string && data.branchOffice.size() > 0 && data.branchOffice.size() <= 200 &&
+             (!('currentStatus' in data) || data.currentStatus in ['online', 'offline', 'degraded', 'maintenance']) &&
+             (!('speed' in data) || data.speed is string) &&
+             (!('userIdDeviceId' in data) || data.userIdDeviceId is string) &&
+             (!('contactName' in data) || data.contactName is string) &&
+             (!('downtimeRecords' in data) || data.downtimeRecords is list) &&
+             data.authorId is string && data.authorId.size() > 0 &&
+             data.keys().hasAll(['ispName', 'branchOffice', 'authorId', 'createdAt', 'updatedAt']);
+    }
+
+    // Setting validation
+    function isValidSetting(data) {
+      return data.recipients is list &&
+             (data.recipients.size() == 0 || data.recipients[0] is string) &&
+             (!('updatedAt' in data) || data.updatedAt == request.time) &&
+             (!('emailjs_service_id' in data) || data.emailjs_service_id is string) &&
+             (!('emailjs_template_id' in data) || data.emailjs_template_id is string) &&
+             (!('emailjs_public_key' in data) || data.emailjs_public_key is string) &&
+             (!('emailjs_enabled' in data) || data.emailjs_enabled is bool) &&
+             data.keys().hasAll(['recipients']);
+    }
+
+    // EmailAlertLog validation
+    function isValidEmailAlertLog(data) {
+      return data.timestamp is string &&
+             data.subject is string &&
+             data.body is string &&
+             data.recipients is list &&
+             (data.recipients.size() == 0 || data.recipients[0] is string) &&
+             data.type is string && data.type in ['isp_down', 'log_update'] &&
+             data.status is string && data.status in ['sent', 'failed'] &&
+             (!('createdAt' in data) || data.createdAt == request.time) &&
+             data.keys().hasAll(['timestamp', 'subject', 'body', 'recipients', 'type', 'status', 'createdAt']);
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId);
+      // For preview purposes, we'll allow any signed-in user to list users so the directory works
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && incoming().updatedAt == request.time && (
+        isAdmin() ||
+        (userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /tickets/{ticketId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidTicket(incoming()) && incoming().authorId == request.auth.uid && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(ticketId) && isValidTicket(incoming()) && incoming().updatedAt == request.time;
+      allow delete: if isManagement();
+    }
+
+    match /repairs/{repairId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidRepair(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(repairId) && isValidRepair(incoming()) && incoming().updatedAt == request.time;
+      allow delete: if isManagement();
+    }
+
+    match /calendarEvents/{eventId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidEvent(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(eventId) && isValidEvent(incoming()) && incoming().updatedAt == request.time;
+      allow delete: if isManagement();
+    }
+
+    match /software_licenses/{licenseId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidSoftwareLicense(incoming()) && incoming().authorId == request.auth.uid && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(licenseId) && isValidSoftwareLicense(incoming()) && incoming().updatedAt == request.time;
+      allow delete: if isManagement();
+    }
+
+    match /isp_accounts/{ispId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidISPAccount(incoming()) && incoming().authorId == request.auth.uid && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(ispId) && isValidISPAccount(incoming()) && incoming().updatedAt == request.time;
+      allow delete: if isManagement();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(settingId) && isValidSetting(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /email_alerts_log/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidEmailAlertLog(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(logId) && isValidEmailAlertLog(incoming());
+      allow delete: if isManagement();
+    }
+  }
+}

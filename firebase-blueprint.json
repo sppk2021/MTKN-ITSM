@@ -1,0 +1,176 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "management", "it_assistant", "staff"] },
+        "status": { "type": "string", "enum": ["active", "disabled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "status", "createdAt", "updatedAt"]
+    },
+    "Ticket": {
+      "title": "Ticket",
+      "description": "Support tickets for dashboard tracking",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "in_progress", "resolved", "closed"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "supportType": { "type": "string", "enum": ["hardware", "software", "network", "account", "other"] },
+        "ticketCode": { "type": "string" },
+        "requestUsername": { "type": "string" },
+        "requestDept": { "type": "string" },
+        "authorId": { "type": "string" },
+        "assigneeId": { "type": "string" },
+        "history": { "type": "array", "items": { "type": "object" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "status", "authorId", "createdAt", "updatedAt"]
+    },
+    "Repair": {
+      "title": "Repair",
+      "description": "Repair records tracking",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "repairCode": { "type": "string" },
+        "device": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "ongoing", "completed"] },
+        "mechanicId": { "type": "string" },
+        "shopCenterName": { "type": "string" },
+        "reportedIssues": { "type": "string" },
+        "history": { "type": "array", "items": { "type": "object" } },
+        "completionDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "device", "status", "history", "createdAt", "updatedAt"]
+    },
+    "CalendarEvent": {
+      "title": "CalendarEvent",
+      "description": "IT Support Scheduling",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "eventType": { "type": "string", "enum": ["standard", "maintenance", "urgent"] },
+        "location": { "type": "string" },
+        "assigneeId": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "in_progress", "resolved", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "startTime", "endTime", "status", "createdAt", "updatedAt"]
+    },
+    "SoftwareLicense": {
+      "title": "Software License",
+      "description": "Tracks software licenses, domains, and server certificates",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["domain", "server", "ms_license", "other"] },
+        "status": { "type": "string", "enum": ["active", "expiring_soon", "expired"] },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "details": { "type": "string" },
+        "licenseKey": { "type": "string" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "type", "status", "expiryDate", "authorId", "createdAt", "updatedAt"]
+    },
+    "ISPAccount": {
+      "title": "ISP Account",
+      "description": "Tracks ISP connections by branch office",
+      "type": "object",
+      "properties": {
+        "ispName": { "type": "string" },
+        "branchOffice": { "type": "string" },
+        "currentStatus": { "type": "string", "enum": ["online", "offline", "degraded", "maintenance"] },
+        "speed": { "type": "string" },
+        "userIdDeviceId": { "type": "string" },
+        "contactName": { "type": "string" },
+        "downtimeRecords": { "type": "array", "items": { "type": "object" } },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ispName", "branchOffice", "authorId", "createdAt", "updatedAt"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global operational settings like recipient emails",
+      "type": "object",
+      "properties": {
+        "recipients": { "type": "array", "items": { "type": "string" } },
+        "emailjs_service_id": { "type": "string" },
+        "emailjs_template_id": { "type": "string" },
+        "emailjs_public_key": { "type": "string" },
+        "emailjs_enabled": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recipients"]
+    },
+    "EmailAlertLog": {
+      "title": "EmailAlertLog",
+      "description": "Log of email alerts dispatched by the system",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string" },
+        "subject": { "type": "string" },
+        "body": { "type": "string" },
+        "recipients": { "type": "array", "items": { "type": "string" } },
+        "type": { "type": "string", "enum": ["isp_down", "log_update"] },
+        "status": { "type": "string", "enum": ["sent", "failed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["timestamp", "subject", "body", "recipients", "type", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles including their system role."
+    },
+    "/tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/Ticket" },
+      "description": "Stores support tickets submitted by staff."
+    },
+    "/repairs/{repairId}": {
+      "schema": { "$ref": "#/entities/Repair" },
+      "description": "Stores repair records."
+    },
+    "/calendarEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/CalendarEvent" },
+      "description": "Stores scheduled events for IT Assistants."
+    },
+    "/software_licenses/{licenseId}": {
+      "schema": { "$ref": "#/entities/SoftwareLicense" },
+      "description": "Stores software licenses, domains, and server certificates."
+    },
+    "/isp_accounts/{ispId}": {
+      "schema": { "$ref": "#/entities/ISPAccount" },
+      "description": "Stores ISP connections by branch office."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Stores global system settings."
+    },
+    "/email_alerts_log/{logId}": {
+      "schema": { "$ref": "#/entities/EmailAlertLog" },
+      "description": "Stores system email logs."
+    }
+  }
+}

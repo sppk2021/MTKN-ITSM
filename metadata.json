@@ -1,0 +1,6 @@
+{
+  "name": "MTKN ITSM",
+  "description": "A comprehensive IT Operations Portal for managing helpdesk tickets, hardware repairs, domain/license lifecycles, and ISP/Network monitoring with a secure custom login system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
