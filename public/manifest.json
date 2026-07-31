@@ -1,0 +1,16 @@
+{
+  "name": "MTKN ITSM Mobile",
+  "short_name": "MTKN ITSM",
+  "description": "Enterprise IT Service Management & Helpdesk Portal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/color/512/android-os.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

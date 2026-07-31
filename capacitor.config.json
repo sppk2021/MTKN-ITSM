@@ -1,0 +1,10 @@
+{
+  "appId": "com.mtkn.itsm",
+  "appName": "MTKN ITSM",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}
