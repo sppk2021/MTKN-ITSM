@@ -128,6 +128,32 @@ service cloud.firestore {
              data.keys().hasAll(['timestamp', 'subject', 'body', 'recipients', 'type', 'status', 'createdAt']);
     }
 
+    // SchoolProject validation
+    function isValidSchoolProject(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.clientSchool is string && data.clientSchool.size() <= 200 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.status is string && data.status in ['planning', 'development', 'testing', 'deployed', 'maintenance'] &&
+             data.priority is string && data.priority in ['low', 'medium', 'high', 'urgent'] &&
+             (!('assignedDeveloper' in data) || data.assignedDeveloper is string) &&
+             (!('targetCompletionDate' in data) || data.targetCompletionDate is string) &&
+             (!('description' in data) || data.description is string) &&
+             (!('attachments' in data) || data.attachments is list) &&
+             (!('bugFixLog' in data) || data.bugFixLog is list) &&
+             (!('steps' in data) || data.steps is list) &&
+             (!('projectNotes' in data) || data.projectNotes is list) &&
+             (!('activityHistory' in data) || data.activityHistory is list) &&
+             (!('notificationsEnabled' in data) || data.notificationsEnabled is bool) &&
+             data.keys().hasAll(['title', 'category', 'clientSchool', 'status', 'priority', 'createdAt', 'updatedAt']);
+    }
+
+    // ProjectTemplate validation
+    function isValidProjectTemplate(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.steps is list &&
+             data.keys().hasAll(['name', 'steps', 'createdAt']);
+    }
+
     match /users/{userId} {
       allow get: if isSignedIn() && isValidId(userId);
       // For preview purposes, we'll allow any signed-in user to list users so the directory works
@@ -185,6 +211,20 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isValidEmailAlertLog(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(logId) && isValidEmailAlertLog(incoming());
+      allow delete: if isManagement();
+    }
+
+    match /school_projects/{projectId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidSchoolProject(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(projectId) && isValidSchoolProject(incoming()) && incoming().updatedAt == request.time;
+      allow delete: if isManagement();
+    }
+
+    match /project_templates/{templateId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidProjectTemplate(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(templateId) && isValidProjectTemplate(incoming());
       allow delete: if isManagement();
     }
   }

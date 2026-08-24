@@ -59,6 +59,31 @@ const CustomHeatmapTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+const CustomProjectDistributionTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-900 text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 space-y-2 min-w-[200px]">
+        <div className="font-bold text-slate-100 border-b border-slate-800 pb-1 flex items-center justify-between">
+          <span>Completion: {data.range}</span>
+          <span className="font-mono text-emerald-400 font-bold">{data.count} Projects</span>
+        </div>
+        {data.projects && data.projects.length > 0 ? (
+          <div className="space-y-1 pt-1 text-[11px] text-slate-300">
+            <p className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">Projects:</p>
+            {data.projects.map((title: string, idx: number) => (
+              <p key={idx} className="truncate">• {title}</p>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[11px] text-slate-500 italic">No projects in this bracket.</p>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
 const renderHeatmapCell = (props: any) => {
   const { cx, cy, payload } = props;
   if (cx === undefined || cy === undefined || !payload) return null;
@@ -149,6 +174,53 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
   const [categoryBreakdownData, setCategoryBreakdownData] = useState<any[]>([]);
   const [heatmapViewMode, setHeatmapViewMode] = useState<'grid' | 'bars'>('grid');
   const [heatmapMetrics, setHeatmapMetrics] = useState({ totalOpen: 0, peakCategory: 'None', peakCount: 0, criticalOrHigh: 0 });
+  
+  const [schoolProjects, setSchoolProjects] = useState<any[]>([]);
+  const [projectMetrics, setProjectMetrics] = useState({
+    activeCount: 0,
+    upcomingDeadlinesCount: 0,
+    urgentCount: 0,
+  });
+
+  const projectCompletionData = useMemo(() => {
+    const buckets = [
+      { range: '0% (Not Started)', count: 0, projects: [] as string[] },
+      { range: '1 - 25%', count: 0, projects: [] as string[] },
+      { range: '26 - 50%', count: 0, projects: [] as string[] },
+      { range: '51 - 75%', count: 0, projects: [] as string[] },
+      { range: '76 - 99%', count: 0, projects: [] as string[] },
+      { range: '100% (Completed)', count: 0, projects: [] as string[] },
+    ];
+
+    schoolProjects.forEach((proj: any) => {
+      const steps = proj.steps || [];
+      const finished = steps.filter((s: any) => s.completed).length;
+      const total = steps.length;
+      const pct = total > 0 ? Math.round((finished / total) * 100) : (proj.status === 'deployed' ? 100 : 0);
+
+      if (pct === 0) {
+        buckets[0].count++;
+        buckets[0].projects.push(proj.title);
+      } else if (pct <= 25) {
+        buckets[1].count++;
+        buckets[1].projects.push(proj.title);
+      } else if (pct <= 50) {
+        buckets[2].count++;
+        buckets[2].projects.push(proj.title);
+      } else if (pct <= 75) {
+        buckets[3].count++;
+        buckets[3].projects.push(proj.title);
+      } else if (pct < 100) {
+        buckets[4].count++;
+        buckets[4].projects.push(proj.title);
+      } else {
+        buckets[5].count++;
+        buckets[5].projects.push(proj.title);
+      }
+    });
+
+    return buckets;
+  }, [schoolProjects]);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -161,12 +233,13 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
           }
         }
 
-        const [ticketsSnap, repairsSnap, usersSnap, ispSnap, licensesSnap] = await Promise.all([
+        const [ticketsSnap, repairsSnap, usersSnap, ispSnap, licensesSnap, projectsSnap] = await Promise.all([
           getDocs(collection(db, "tickets")),
           getDocs(collection(db, "repairs")),
           getDocs(collection(db, "users")),
           getDocs(collection(db, "isp_accounts")),
-          getDocs(collection(db, "software_licenses"))
+          getDocs(collection(db, "software_licenses")),
+          getDocs(collection(db, "school_projects"))
         ]);
         
         const allTickets = ticketsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -174,6 +247,22 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
         const allRepairs = repairsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const allLicenses = licensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const allProjects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const activeProjects = allProjects.filter((p: any) => p.status !== 'deployed' && p.status !== 'maintenance');
+        const upcomingDeadlines = allProjects.filter((p: any) => {
+          if (!p.targetCompletionDate) return false;
+          const days = differenceInDays(new Date(p.targetCompletionDate), new Date());
+          return days >= 0 && days <= 14;
+        });
+        const urgentProjects = allProjects.filter((p: any) => ['urgent', 'high'].includes(p.priority) && p.status !== 'deployed');
+
+        setSchoolProjects(allProjects);
+        setProjectMetrics({
+          activeCount: activeProjects.length,
+          upcomingDeadlinesCount: upcomingDeadlines.length,
+          urgentCount: urgentProjects.length,
+        });
 
         const openTickets = allTickets.filter((t: any) => ["open", "in_progress"].includes(t.status));
         const criticalTickets = allTickets.filter((t: any) => ["critical", "high"].includes(t.priority) && t.status !== "resolved");
@@ -351,6 +440,131 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                   </div>
                 </Link>
               ))}
+            </div>
+
+            {/* Projects Overview Card */}
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-6 space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-700 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600/10 dark:bg-blue-600/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">Projects Overview & Step Tracker</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Summarizing LMS, library matrix, school website builds, and developer bug fixes</p>
+                  </div>
+                </div>
+                <Link
+                  to="/projects"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 self-start"
+                >
+                  <span>Manage All Projects</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              {/* Summary Stats Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Active Projects</span>
+                    <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 block">{projectMetrics.activeCount}</span>
+                  </div>
+                  <div className="p-3 bg-blue-500/10 text-blue-600 rounded-lg">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Upcoming Deadlines (14d)</span>
+                    <span className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-1 block">{projectMetrics.upcomingDeadlinesCount}</span>
+                  </div>
+                  <div className="p-3 bg-amber-500/10 text-amber-600 rounded-lg">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Urgent / High Priority</span>
+                    <span className="text-2xl font-extrabold text-rose-600 dark:text-rose-400 mt-1 block">{projectMetrics.urgentCount}</span>
+                  </div>
+                  <div className="p-3 bg-rose-500/10 text-rose-600 rounded-lg">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Status Distribution Chart */}
+              <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-blue-500" />
+                    Project Status Distribution by Completion Percentage
+                  </h3>
+                  <span className="text-xs text-slate-500">{schoolProjects.length} Total Projects</span>
+                </div>
+                <div className="h-64 w-full bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/60">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={projectCompletionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.15} />
+                      <XAxis dataKey="range" stroke="#64748b" fontSize={11} tickLine={false} />
+                      <YAxis stroke="#64748b" fontSize={11} allowDecimals={false} tickLine={false} />
+                      <Tooltip content={<CustomProjectDistributionTooltip />} />
+                      <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Active Projects Step Details & Progress */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Project Steps & Progress Breakdown</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {schoolProjects.slice(0, 4).map(proj => {
+                    const steps = proj.steps || [];
+                    const finished = steps.filter((s: any) => s.completed).length;
+                    const total = steps.length;
+                    const pct = total > 0 ? Math.round((finished / total) * 100) : 0;
+
+                    return (
+                      <div key={proj.id} className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-3">
+                        <div className="flex items-center justify-end">
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">🏫 {proj.clientSchool}</span>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{proj.title}</h4>
+                          <p className="text-xs text-slate-500 mt-0.5">Target: {proj.targetCompletionDate || 'N/A'}</p>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500">Milestone Steps Progress</span>
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{finished}/{total} Finished ({pct}%)</span>
+                          </div>
+                          <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${pct}%` }}></div>
+                          </div>
+                        </div>
+
+                        {/* Steps breakdown list */}
+                        <div className="space-y-1 pt-1 border-t border-slate-200/60 dark:border-slate-800 text-[11px]">
+                          {steps.map((s: any) => (
+                            <div key={s.id} className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                              <span className={`truncate max-w-[220px] ${s.completed ? 'line-through text-slate-400' : ''}`}>• {s.title}</span>
+                              <span className={s.completed ? 'text-emerald-600 font-semibold' : 'text-amber-500 font-semibold'}>
+                                {s.completed ? 'Finished' : 'Remaining'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* Main Grid Content */}

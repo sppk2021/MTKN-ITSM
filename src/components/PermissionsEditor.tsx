@@ -24,7 +24,8 @@ import {
   Wrench,
   Ticket,
   Server,
-  Globe
+  Globe,
+  FolderKanban
 } from "lucide-react";
 
 interface PermissionsEditorProps {
@@ -43,6 +44,7 @@ const TAB_ICONS: Record<TabKey, React.ComponentType<{ className?: string }>> = {
   tickets: Ticket,
   software: Server,
   isp: Globe,
+  projects: FolderKanban,
 };
 
 const ALL_TABS: TabKey[] = [
@@ -52,6 +54,7 @@ const ALL_TABS: TabKey[] = [
   'calendar',
   'software',
   'isp',
+  'projects',
   'reports',
   'users',
 ];

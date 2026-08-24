@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, BarChart3, CalendarDays, Wrench, LogOut, 
   Ticket, Globe, Server, Shield, Lock, User as UserIcon, LogIn, 
   ChevronLeft, ChevronRight, Download, Menu, X as CloseIcon, 
-  UserCheck, Settings2, Sparkles, Sun, Moon
+  UserCheck, Settings2, Sparkles, Sun, Moon, FolderKanban
 } from "lucide-react";
 import { auth, db } from "./lib/firebase";
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
@@ -19,6 +19,7 @@ import RepairsTracking from "./pages/RepairsTracking";
 import SupportTickets from "./pages/SupportTickets";
 import SoftwareStatus from "./pages/SoftwareStatus";
 import ISPManagement from "./pages/ISPManagement";
+import ClientProjects from "./pages/ClientProjects";
 import { UserProfileModal } from "./components/UserProfileModal";
 import { SyncStatusBadge } from "./components/SyncStatusBadge";
 import { cn } from "./lib/utils";
@@ -117,6 +118,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
     { name: 'Tickets', href: '/tickets', icon: Ticket, tabKey: 'tickets' },
     { name: 'Licenses', href: '/software', icon: Server, tabKey: 'software' },
     { name: 'ISP Mgmt', href: '/isp', icon: Globe, tabKey: 'isp' },
+    { name: 'Projects & Solutions', href: '/projects', icon: FolderKanban, tabKey: 'projects' },
   ];
 
   // Restrict sidebar items based on granular tab permissions or admin override
@@ -598,6 +600,12 @@ export default function App() {
       icons: [
         {
           src: logoData,
+          sizes: "192x192",
+          type: "image/png",
+          purpose: "any maskable"
+        },
+        {
+          src: logoData,
           sizes: "512x512",
           type: "image/png",
           purpose: "any maskable"
@@ -664,12 +672,16 @@ export default function App() {
     }
   };
 
-  const handleProfileUpdated = (updatedData: { displayName: string; photoURL?: string }) => {
+  const handleProfileUpdated = (updatedData: { displayName: string; photoURL?: string; email?: string }) => {
     if (updatedData.displayName) {
       setUserDisplayName(updatedData.displayName);
     }
     if (updatedData.photoURL !== undefined) {
       setUserPhotoURL(updatedData.photoURL);
+    }
+    if (updatedData.email && user) {
+      // Update local user object email representation
+      setUser({ ...user, email: updatedData.email });
     }
   };
 
@@ -889,6 +901,15 @@ export default function App() {
               element={
                 <PermissionGuard tabKey="isp" userRole={userRole} userPermissions={userPermissions}>
                   <ISPManagement userRole={userRole} userPermissions={userPermissions} />
+                </PermissionGuard>
+              } 
+            />
+
+            <Route 
+              path="/projects" 
+              element={
+                <PermissionGuard tabKey="projects" userRole={userRole} userPermissions={userPermissions}>
+                  <ClientProjects userRole={userRole} userPermissions={userPermissions} />
                 </PermissionGuard>
               } 
             />
