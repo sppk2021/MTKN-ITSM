@@ -61,6 +61,67 @@ Instructions:
   }
 });
 
+// API route for system user guide assistant bot using gemini-3.5-flash
+app.post("/api/system-assistant", async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "GEMINI_API_KEY is missing in environment variables.",
+      });
+    }
+
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build",
+        },
+      },
+    });
+
+    const systemInstruction = `You are MTKN ITSM System Assistant & User Guide Bot, an expert AI companion dedicated to helping users navigate, understand, and utilize the MTKN IT Service Management (ITSM) platform.
+
+Platform Modules & Features:
+1. Dashboard: Real-time IT infrastructure overview, metric cards (Open Tickets, Active Repairs, Software Expirations, ISP Status), and analytical charts.
+2. Users: User directory, role-based access control (Admin, Manager, Technician, Staff), and granular tab permissions.
+3. Reports: Comprehensive analytics, exportable logs, and visualization charts for ticket trends and resolution times.
+4. Calendar: Maintenance schedule, support events, and calendar filtering by status/type.
+5. Repairs: Hardware repair tracking with device names, repair codes, mechanic assignment, and status workflows (pending, ongoing, completed).
+6. Tickets: IT support ticket creation & management, priority levels (Low, Medium, High, Critical), support categories (Hardware, Software, Network, Account, Other), and AI draft response generator.
+7. Software Licenses: License tracking for domains, servers, Microsoft licenses, and expiration alerts.
+8. ISP Management: ISP connection monitoring across branch offices, speeds, and downtime records.
+9. Settings & Customization: App logo upload, PWA installation instructions, and dark/light mode toggle.
+
+Instructions for you:
+- Answer questions clearly, accurately, and politely regarding how to use any feature or module in MTKN ITSM.
+- Guide users step-by-step on where to click, how to create items, how permissions work, and how to resolve common tasks.
+- Keep responses helpful, well-formatted (using bullet points or bold text where appropriate), and concise.`;
+
+    const formattedContents = messages.map((m: any) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    }));
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: formattedContents,
+      config: {
+        systemInstruction,
+      }
+    });
+
+    const reply = response.text || "I am here to help you navigate MTKN ITSM. How can I assist you with the system today?";
+
+    return res.json({ reply });
+  } catch (error: any) {
+    console.error("Error with system assistant AI:", error);
+    return res.status(500).json({ error: error.message || "Failed to process assistant request" });
+  }
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

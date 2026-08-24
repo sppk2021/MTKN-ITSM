@@ -821,6 +821,8 @@ export default function App() {
           userPermissions={userPermissions}
           onProfileUpdated={handleProfileUpdated}
         />
+
+
       </div>
     </Router>
   );
