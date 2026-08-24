@@ -541,7 +541,7 @@ export default function App() {
           link.href = logoData;
         }
       } catch (err) {
-        console.error("Error fetching app logo:", err);
+        console.warn("Notice: App logo fetch offline/unavailable:", err);
       }
     };
     fetchLogo();
@@ -630,7 +630,7 @@ export default function App() {
           setUserPhotoURL(activePhotoURL);
           setUser(u);
         } catch (err) {
-          console.error("Error retrieving user document:", err);
+          console.warn("Notice: User document retrieval offline/unavailable:", err);
           setUser(u);
           setUserRole("staff");
           setUserPermissions(DEFAULT_ROLE_PERMISSIONS.staff);
