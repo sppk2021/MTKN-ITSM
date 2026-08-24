@@ -152,8 +152,8 @@ export function PermissionsEditor({
   return (
     <div className="space-y-3">
       {/* Quick Action Presets Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
-        <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs">
+        <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-blue-600" />
           <span>Quick Presets:</span>
         </span>
@@ -162,7 +162,7 @@ export function PermissionsEditor({
             type="button"
             onClick={() => applyPreset('all')}
             disabled={disabled}
-            className="px-2 py-1 bg-white border border-slate-200 rounded text-slate-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 font-medium transition-colors cursor-pointer text-[11px]"
+            className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 font-medium transition-colors cursor-pointer text-[11px]"
           >
             Grant All
           </button>
@@ -170,7 +170,7 @@ export function PermissionsEditor({
             type="button"
             onClick={() => applyPreset('view_only')}
             disabled={disabled}
-            className="px-2 py-1 bg-white border border-slate-200 rounded text-slate-700 hover:bg-slate-100 font-medium transition-colors cursor-pointer text-[11px]"
+            className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium transition-colors cursor-pointer text-[11px]"
           >
             View Only
           </button>
@@ -187,7 +187,7 @@ export function PermissionsEditor({
             type="button"
             onClick={() => applyPreset('none')}
             disabled={disabled}
-            className="px-2 py-1 bg-white border border-slate-200 rounded text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 font-medium transition-colors cursor-pointer text-[11px]"
+            className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-500 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200 font-medium transition-colors cursor-pointer text-[11px]"
           >
             Clear All
           </button>
@@ -195,10 +195,10 @@ export function PermissionsEditor({
       </div>
 
       {/* Permissions Grid Table */}
-      <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+      <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800 shadow-sm">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-600 text-[11px] font-bold">
+            <tr className="bg-slate-100/80 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-[11px] font-bold">
               <th className="px-3 py-2.5">Tab / Module</th>
               <th className="px-2.5 py-2.5 text-center w-20">
                 <button
@@ -208,7 +208,7 @@ export function PermissionsEditor({
                   className="hover:text-blue-700 font-bold flex items-center justify-center gap-1 w-full text-center group cursor-pointer"
                   title="Toggle all View permissions"
                 >
-                  <Eye className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600" />
+                  <Eye className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-blue-600" />
                   <span>View</span>
                 </button>
               </th>
@@ -220,7 +220,7 @@ export function PermissionsEditor({
                   className="hover:text-amber-700 font-bold flex items-center justify-center gap-1 w-full text-center group cursor-pointer"
                   title="Toggle all Edit permissions"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600" />
+                  <Edit3 className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-amber-600" />
                   <span>Edit</span>
                 </button>
               </th>
@@ -232,13 +232,13 @@ export function PermissionsEditor({
                   className="hover:text-red-700 font-bold flex items-center justify-center gap-1 w-full text-center group cursor-pointer"
                   title="Toggle all Delete permissions"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-600" />
+                  <Trash2 className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-red-600" />
                   <span>Delete</span>
                 </button>
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {ALL_TABS.map((tab) => {
               const Icon = TAB_ICONS[tab];
               const perm = permissions[tab] || { view: false, edit: false, delete: false };
@@ -248,9 +248,7 @@ export function PermissionsEditor({
               return (
                 <tr 
                   key={tab} 
-                  className={`hover:bg-slate-50/70 transition-colors ${
-                    hasSomeChecked ? 'bg-white' : 'bg-slate-50/30'
-                  }`}
+                  className={`hover:bg-slate-50/70 transition-colors ${ hasSomeChecked ? 'bg-white' : 'bg-slate-50/30' }`}
                 >
                   <td className="px-3 py-2">
                     <button
@@ -260,14 +258,10 @@ export function PermissionsEditor({
                       className="flex items-center gap-2 text-left w-full group cursor-pointer"
                       title="Click to toggle all permissions for this tab"
                     >
-                      <div className={`p-1 rounded ${
-                        hasSomeChecked ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'
-                      }`}>
+                      <div className={`p-1 rounded ${ hasSomeChecked ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400' }`}>
                         <Icon className="w-3.5 h-3.5" />
                       </div>
-                      <span className={`font-semibold transition-colors ${
-                        hasSomeChecked ? 'text-slate-800' : 'text-slate-500'
-                      }`}>
+                      <span className={`font-semibold transition-colors ${ hasSomeChecked ? 'text-slate-800' : 'text-slate-500' }`}>
                         {TAB_LABELS[tab]}
                       </span>
                     </button>
@@ -275,39 +269,39 @@ export function PermissionsEditor({
 
                   {/* View Checkbox */}
                   <td className="px-2.5 py-2 text-center">
-                    <label className="inline-flex items-center justify-center cursor-pointer p-1 rounded hover:bg-slate-100 transition-colors">
+                    <label className="inline-flex items-center justify-center cursor-pointer p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                       <input
                         type="checkbox"
                         checked={!!perm.view}
                         onChange={() => togglePermission(tab, 'view')}
                         disabled={disabled}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 focus:ring-1 cursor-pointer accent-blue-600"
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-600 focus:ring-blue-500 focus:ring-1 cursor-pointer accent-blue-600"
                       />
                     </label>
                   </td>
 
                   {/* Edit Checkbox */}
                   <td className="px-2.5 py-2 text-center">
-                    <label className="inline-flex items-center justify-center cursor-pointer p-1 rounded hover:bg-slate-100 transition-colors">
+                    <label className="inline-flex items-center justify-center cursor-pointer p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                       <input
                         type="checkbox"
                         checked={!!perm.edit}
                         onChange={() => togglePermission(tab, 'edit')}
                         disabled={disabled}
-                        className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 focus:ring-1 cursor-pointer accent-amber-600"
+                        className="w-4 h-4 text-amber-600 rounded border-slate-300 dark:border-slate-600 focus:ring-amber-500 focus:ring-1 cursor-pointer accent-amber-600"
                       />
                     </label>
                   </td>
 
                   {/* Delete Checkbox */}
                   <td className="px-2.5 py-2 text-center">
-                    <label className="inline-flex items-center justify-center cursor-pointer p-1 rounded hover:bg-slate-100 transition-colors">
+                    <label className="inline-flex items-center justify-center cursor-pointer p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                       <input
                         type="checkbox"
                         checked={!!perm.delete}
                         onChange={() => togglePermission(tab, 'delete')}
                         disabled={disabled}
-                        className="w-4 h-4 text-red-600 rounded border-slate-300 focus:ring-red-500 focus:ring-1 cursor-pointer accent-red-600"
+                        className="w-4 h-4 text-red-600 rounded border-slate-300 dark:border-slate-600 focus:ring-red-500 focus:ring-1 cursor-pointer accent-red-600"
                       />
                     </label>
                   </td>

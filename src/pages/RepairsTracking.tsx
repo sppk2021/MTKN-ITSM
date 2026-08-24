@@ -276,13 +276,13 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
 
   return (
     <>
-      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+      <header className="min-h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2.5 flex-wrap">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2.5 flex-wrap">
             <span>Repairs Tracking</span>
             <SyncStatusBadge onSynced={fetchRepairs} />
           </h1>
-          <p className="text-xs text-slate-500">Log hardware and system repairs with local-first offline sync</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Log hardware and system repairs with local-first offline sync</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -295,19 +295,19 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
       <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex items-center relative max-w-md flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3" />
             <input
               type="text"
               placeholder="Search tickets, devices, or history..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition-shadow"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition-shadow"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
+                className="absolute right-2.5 p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 rounded cursor-pointer"
                 title="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
@@ -318,7 +318,7 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
             <button
               type="button"
               onClick={clearAllFiltersAndInputs}
-              className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
             >
               Clear Filter
             </button>
@@ -326,14 +326,14 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? <div className="text-slate-500 col-span-full">Loading...</div> : filteredRepairs.map(repair => {
+          {loading ? <div className="text-slate-500 dark:text-slate-400 col-span-full">Loading...</div> : filteredRepairs.map(repair => {
             const mechanicName = assistants.find(a => a.id === repair.mechanicId)?.email || 'Unassigned';
             const isAdminRepair = isAdminAddedData(repair);
             const isItAssistant = userRole === 'it_assistant';
             const disableFields = isItAssistant && isAdminRepair;
 
             return (
-              <div key={repair.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col h-full">
+              <div key={repair.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 flex flex-col h-full">
                 <div className="flex justify-between items-start mb-4 gap-2">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
@@ -344,31 +344,27 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
                         </button>
                       )}
                     </div>
-                    <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{repair.title}</h3>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{repair.title}</h3>
                   </div>
-                  <span className={`shrink-0 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-full ${
-                    repair.status === 'completed' ? 'bg-green-100 text-green-700' :
-                    repair.status === 'ongoing' ? 'bg-amber-100 text-amber-700' :
-                    'bg-slate-100 text-slate-500'
-                  }`}>
+                  <span className={`shrink-0 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-full ${ repair.status === 'completed' ? 'bg-green-100 text-green-700' : repair.status === 'ongoing' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500' }`}>
                     {repair.status}
                   </span>
                 </div>
                 <div className="mb-4">
-                  <p className="text-xs text-slate-500 flex-1 mb-1">Device: <span className="font-medium text-slate-700">{repair.device}</span></p>
-                  {repair.shopCenterName && <p className="text-xs text-slate-500 flex-1 mb-1">Sent to: <span className="font-medium text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-100">{repair.shopCenterName}</span></p>}
-                  {repair.reportedIssues && <p className="text-xs text-slate-500 line-clamp-2">Issues: <span className="text-slate-700">{repair.reportedIssues}</span></p>}
+                  <p className="text-xs text-slate-500 dark:text-slate-400 flex-1 mb-1">Device: <span className="font-medium text-slate-700 dark:text-slate-300">{repair.device}</span></p>
+                  {repair.shopCenterName && <p className="text-xs text-slate-500 dark:text-slate-400 flex-1 mb-1">Sent to: <span className="font-medium text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-100">{repair.shopCenterName}</span></p>}
+                  {repair.reportedIssues && <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">Issues: <span className="text-slate-700 dark:text-slate-300">{repair.reportedIssues}</span></p>}
                 </div>
                 
-                <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <div className="grid grid-cols-2 gap-2 text-xs mb-2">
                      <div>
-                       <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Mechanic</label>
+                       <label className="block text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Mechanic</label>
                        <select
                          value={repair.mechanicId || 'unassigned'}
                          onChange={(e) => updateField(repair.id, 'mechanicId', e.target.value)}
                          disabled={disableFields}
-                         className="w-full bg-slate-50 border border-slate-200 rounded outline-none px-2 py-1 text-slate-800 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded outline-none px-2 py-1 text-slate-800 dark:text-slate-200 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                        >
                          <option value="unassigned">Unassigned</option>
                          {assistants.map(a => (
@@ -377,10 +373,10 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
                        </select>
                      </div>
                      <div>
-                       <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Ext. Shop / Center</label>
+                       <label className="block text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Ext. Shop / Center</label>
                        <input
                          type="text"
-                         className="w-full bg-slate-50 border border-slate-200 rounded outline-none px-2 py-1 text-slate-800 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded outline-none px-2 py-1 text-slate-800 dark:text-slate-200 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                          value={repair.shopCenterName || ''}
                          placeholder="e.g. Apple Store"
                          disabled={disableFields}
@@ -389,8 +385,8 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
                      </div>
                   </div>
 
-                  <div className="text-[11px] text-slate-500 line-clamp-2">
-                    <span className="font-bold text-slate-700">Latest update:</span> {repair.history?.[repair.history.length - 1]?.note}
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">Latest update:</span> {repair.history?.[repair.history.length - 1]?.note}
                     {repair.completionDate && <div className="mt-1 text-green-600 font-medium">Completed: {format(new Date(repair.completionDate), 'MMM d, yyyy h:mm a')}</div>}
                   </div>
                   
@@ -399,7 +395,7 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
                       value={repair.status}
                       onChange={(e) => updateStatus(repair.id, e.target.value)}
                       disabled={disableFields}
-                      className="bg-slate-50 border border-slate-200 text-xs rounded outline-none px-2 py-1.5 flex-1 text-slate-800 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs rounded outline-none px-2 py-1.5 flex-1 text-slate-800 dark:text-slate-200 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <option value="pending">Pending</option>
                       <option value="ongoing">Ongoing</option>
@@ -418,26 +414,26 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
                 {/* History Modal for this repair */}
               {showHistoryModal === repair.id && (
                 <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50 backdrop-blur-[2px]">
-                  <div className="bg-white rounded-xl p-6 w-full max-w-lg border border-slate-200 shadow-xl">
-                    <h2 className="text-lg font-bold text-slate-900 mb-4">Repair History - {repair.title}</h2>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-slate-700 shadow-xl">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Repair History - {repair.title}</h2>
                     <div className="max-h-60 overflow-y-auto mb-4 space-y-2 pr-2">
                       {repair.history?.map((h: any, i: number) => (
-                        <div key={i} className="bg-slate-50 border border-slate-100 p-3 rounded text-sm">
-                          <div className="text-slate-800">{h.note}</div>
-                          <div className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-wider">{format(new Date(h.date), 'Pp')}</div>
+                        <div key={i} className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 rounded text-sm">
+                          <div className="text-slate-800 dark:text-slate-200">{h.note}</div>
+                          <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-wider">{format(new Date(h.date), 'Pp')}</div>
                         </div>
                       ))}
                     </div>
                     <form onSubmit={(e) => handleAddHistory(e, repair.id, repair.history || [])}>
                       <textarea required
                         placeholder="Add new update/note..."
-                        className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 mb-4 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 mb-4 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         rows={3}
                         value={historyNote}
                         onChange={e => setHistoryNote(e.target.value)}
                       ></textarea>
                       <div className="flex justify-end space-x-2">
-                        <button type="button" onClick={() => setShowHistoryModal(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">Close</button>
+                        <button type="button" onClick={() => setShowHistoryModal(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors">Close</button>
                         <button type="submit" className="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold shadow-sm hover:bg-blue-700 transition-colors">Add Note</button>
                       </div>
                     </form>
@@ -446,49 +442,49 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
               )}
             </div>
           )})}
-          {filteredRepairs.length === 0 && !loading && <div className="text-slate-500 col-span-full">No repair records found.</div>}
+          {filteredRepairs.length === 0 && !loading && <div className="text-slate-500 dark:text-slate-400 col-span-full">No repair records found.</div>}
         </div>
 
         {showModal && (
           <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50 backdrop-blur-[2px]">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md border border-slate-200 shadow-xl">
-              <h2 className="text-lg font-bold text-slate-900 mb-5">New Repair Ticket</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md border border-slate-200 dark:border-slate-700 shadow-xl">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-5">New Repair Ticket</h2>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Issue / Title</label>
-                  <input required type="text" value={newRepair.title} onChange={e => setNewRepair({...newRepair, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Issue / Title</label>
+                  <input required type="text" value={newRepair.title} onChange={e => setNewRepair({...newRepair, title: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Specific Issues (Tracking)</label>
-                  <textarea value={newRepair.reportedIssues} onChange={e => setNewRepair({...newRepair, reportedIssues: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" rows={2}></textarea>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Specific Issues (Tracking)</label>
+                  <textarea value={newRepair.reportedIssues} onChange={e => setNewRepair({...newRepair, reportedIssues: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" rows={2}></textarea>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Device / Hardware</label>
-                  <input required type="text" value={newRepair.device} onChange={e => setNewRepair({...newRepair, device: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Device / Hardware</label>
+                  <input required type="text" value={newRepair.device} onChange={e => setNewRepair({...newRepair, device: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">External Shop / Center Name (Optional)</label>
-                  <input type="text" value={newRepair.shopCenterName} onChange={e => setNewRepair({...newRepair, shopCenterName: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Leave blank if repairing internally" />
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">External Shop / Center Name (Optional)</label>
+                  <input type="text" value={newRepair.shopCenterName} onChange={e => setNewRepair({...newRepair, shopCenterName: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Leave blank if repairing internally" />
                 </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Assign Mechanic</label>
-                    <select value={newRepair.mechanicId} onChange={e => setNewRepair({...newRepair, mechanicId: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Assign Mechanic</label>
+                    <select value={newRepair.mechanicId} onChange={e => setNewRepair({...newRepair, mechanicId: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                       <option value="unassigned">Unassigned</option>
                       {assistants.map(a => (
                         <option key={a.id} value={a.id}>{a.displayName || a.username || a.email}</option>
                       ))}
                     </select>
                   </div>
-                <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={resetNewRepair}
-                    className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
                   >
                     Clear Form
                   </button>
                   <div className="flex space-x-2">
-                    <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">Cancel</button>
+                    <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors cursor-pointer">Cancel</button>
                     <button type="submit" className="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold shadow-sm hover:bg-blue-700 transition-colors cursor-pointer">Create Ticket</button>
                   </div>
                 </div>

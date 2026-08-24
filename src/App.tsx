@@ -191,7 +191,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
             )}
           </button>
           {(!isCollapsed || isMobileOpen) && (
-            <span className="text-white font-bold text-lg tracking-tight truncate flex-1">
+            <span className="text-slate-900 dark:text-white font-bold text-lg tracking-tight truncate flex-1">
               MTKN ITSM
             </span>
           )}
@@ -201,7 +201,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
         {!isCollapsed && !isMobileOpen && (
           <button 
             onClick={toggleCollapse}
-            className="hidden md:flex text-slate-400 hover:text-white w-9 h-9 rounded-lg hover:bg-slate-800 transition-colors items-center justify-center cursor-pointer"
+            className="hidden md:flex text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white w-9 h-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors items-center justify-center cursor-pointer"
             title="Collapse sidebar"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -211,7 +211,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
         {isCollapsed && !isMobileOpen && (
           <button 
             onClick={toggleCollapse}
-            className="hidden md:flex text-slate-400 hover:text-white w-8 h-8 rounded-lg hover:bg-slate-800 transition-colors items-center justify-center bg-slate-800/50 cursor-pointer"
+            className="hidden md:flex text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white w-8 h-8 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors items-center justify-center bg-slate-100 dark:bg-slate-800/50 cursor-pointer"
             title="Expand sidebar"
           >
             <ChevronRight className="w-4 h-4" />
@@ -221,7 +221,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
         {isMobileOpen && (
           <button 
             onClick={() => setIsMobileOpen(false)}
-            className="md:hidden text-slate-400 hover:text-white w-9 h-9 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+            className="md:hidden text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white w-9 h-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
             title="Close menu"
           >
             <CloseIcon className="w-5 h-5" />
@@ -246,8 +246,8 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
                   isActive
                     ? isCollapsed && !isMobileOpen
                       ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
-                      : "bg-blue-600/15 text-blue-400 font-semibold border border-blue-500/20"
-                    : "text-slate-400 hover:bg-slate-800/80 hover:text-white"
+                      : "bg-blue-50 dark:bg-blue-600/15 text-blue-600 dark:text-blue-600 dark:text-blue-400 font-semibold border border-blue-200 dark:border-blue-500/20"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -256,7 +256,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
 
               {/* Floating Tooltip for Collapsed Sidebar */}
               {isCollapsed && !isMobileOpen && (
-                <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-950 text-white text-xs font-semibold rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 flex items-center gap-1.5">
+                <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-800 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 flex items-center gap-1.5">
                   <span>{item.name}</span>
                   {isActive && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
                 </div>
@@ -282,7 +282,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
             </button>
 
             {isCollapsed && !isMobileOpen && (
-              <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-950 text-emerald-300 text-xs font-semibold rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-800 dark:bg-slate-950 text-emerald-400 dark:text-emerald-300 text-xs font-semibold rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
                 Install Application (PWA)
               </div>
             )}
@@ -291,12 +291,12 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
       </nav>
 
       {/* Theme Switcher */}
-      <div className="mt-auto pt-4 pb-2 shrink-0 border-b border-slate-800">
+      <div className="mt-auto pt-4 pb-2 shrink-0 border-b border-slate-200 dark:border-slate-800">
         <div className="relative group">
           <button
             onClick={toggleTheme}
             className={cn(
-              "flex items-center transition-all min-h-[42px] cursor-pointer text-slate-400 hover:bg-slate-800/80 hover:text-white",
+              "flex items-center transition-all min-h-[42px] cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white",
               isCollapsed && !isMobileOpen
                 ? "w-11 h-11 mx-auto justify-center rounded-xl"
                 : "w-full gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium"
@@ -307,7 +307,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
             {(!isCollapsed || isMobileOpen) && <span className="truncate">{isDarkMode ? "Light Mode" : "Dark Mode"}</span>}
           </button>
           {isCollapsed && !isMobileOpen && (
-            <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-950 text-white text-xs font-semibold rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+            <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-800 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
               {isDarkMode ? "Light Mode" : "Dark Mode"}
             </div>
           )}
@@ -318,12 +318,12 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
       <div className="pt-3 shrink-0">
         {isCollapsed && !isMobileOpen ? (
           /* Collapsed User Controls */
-          <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-800">
+          <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
             {/* Avatar Button with Tooltip */}
             <div className="relative group">
               <button
                 onClick={() => onOpenProfile()}
-                className="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-white transition-all cursor-pointer relative"
+                className="w-11 h-11 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white transition-all cursor-pointer relative"
               >
                 {photoURL ? (
                   <img src={photoURL} alt="Profile" className="w-full h-full rounded-xl object-cover" referrerPolicy="no-referrer" />
@@ -332,10 +332,10 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
                     {userInitials}
                   </div>
                 )}
-                <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-900", isOnline ? "bg-emerald-500" : "bg-rose-500")} title={isOnline ? "Online" : "Offline"} />
+                <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900", isOnline ? "bg-emerald-500" : "bg-rose-500")} title={isOnline ? "Online" : "Offline"} />
               </button>
 
-              <div className="pointer-events-none absolute left-full bottom-0 ml-3 px-3 py-2 bg-slate-950 text-white text-xs rounded-xl shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              <div className="pointer-events-none absolute left-full bottom-0 ml-3 px-3 py-2 bg-slate-800 dark:bg-slate-950 text-white text-xs rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <p className="font-bold text-white">{displayName || userEmail || "My Profile"}</p>
                   <span className={cn("w-1.5 h-1.5 rounded-full", isOnline ? "bg-emerald-500" : "bg-rose-500")}></span>
@@ -349,19 +349,19 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
             <div className="relative group">
               <button
                 onClick={() => signOut(auth)}
-                className="w-10 h-10 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors flex items-center justify-center cursor-pointer"
+                className="w-10 h-10 rounded-xl text-slate-400 dark:text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 transition-colors flex items-center justify-center cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
               </button>
 
-              <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-950 text-rose-300 text-xs font-semibold rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-800 dark:bg-slate-950 text-rose-400 dark:text-rose-300 text-xs font-semibold rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
                 Sign Out
               </div>
             </div>
           </div>
         ) : (
           /* Expanded User Controls */
-          <div className="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 space-y-2.5">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-3 space-y-2.5">
             {/* Clickable Profile Card */}
             <button
               type="button"
@@ -382,12 +382,12 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
                     </div>
                   )}
                 </div>
-                <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-800", isOnline ? "bg-emerald-500" : "bg-rose-500")} />
+                <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-200 dark:border-slate-800", isOnline ? "bg-emerald-500" : "bg-rose-500")} />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {displayName || userEmail?.split('@')[0] || "My Profile"}
                   </p>
                   <div className="flex items-center gap-1 shrink-0 ml-1">
@@ -396,26 +396,26 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider bg-blue-950/80 px-1.5 py-0.2 rounded border border-blue-800/60">
+                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider bg-blue-50 dark:bg-blue-950/80 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-800/60">
                     {role.replace('_', ' ')}
                   </span>
-                  <span className="text-[10px] text-slate-400 truncate font-mono">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate font-mono">
                     Edit Profile
                   </span>
                 </div>
               </div>
 
-              <Settings2 className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors shrink-0" />
+              <Settings2 className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-blue-400 transition-colors shrink-0" />
             </button>
 
             {/* Sign out button */}
-            <div className="pt-2 border-t border-slate-700/50 flex items-center justify-between px-1">
-              <span className="text-[10px] text-slate-400 truncate max-w-[120px] font-mono">
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-700/50 flex items-center justify-between px-1">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[120px] font-mono">
                 {userEmail || 'user@mtknitsm.local'}
               </span>
               <button
                 onClick={() => signOut(auth)}
-                className="text-slate-400 hover:text-rose-400 text-[11px] font-semibold flex items-center gap-1 hover:bg-rose-500/10 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                className="text-slate-400 dark:text-slate-500 hover:text-rose-400 text-[11px] font-semibold flex items-center gap-1 hover:bg-rose-500/10 px-2 py-1 rounded-lg transition-colors cursor-pointer"
                 title="Sign out of account"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -426,8 +426,8 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
         )}
 
         {(!isCollapsed || isMobileOpen) && (
-          <div className="text-[10px] text-slate-500 text-center font-mono tracking-wider pt-2">
-            Developed by <span className="text-slate-400 font-sans font-medium">Saw Pyae Phyo Kyaw</span>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 text-center font-mono tracking-wider pt-2">
+            Developed by <span className="text-slate-400 dark:text-slate-500 font-sans font-medium">Saw Pyae Phyo Kyaw</span>
           </div>
         )}
       </div>
@@ -437,7 +437,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
   return (
     <>
       {/* Mobile Header Bar */}
-      <div className="md:hidden bg-slate-900 border-b border-slate-800 px-4 h-14 flex items-center justify-between shrink-0 text-white z-20">
+      <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-14 flex items-center justify-between shrink-0 text-slate-900 dark:text-white z-20">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 bg-blue-600 rounded flex items-center justify-center font-bold text-xs shadow-sm">MT</div>
           <span className="font-semibold text-sm tracking-tight">MTKN ITSM</span>
@@ -447,7 +447,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
           {/* Mobile Profile Trigger Button */}
           <button
             onClick={onOpenProfile}
-            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-full border border-slate-700 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             title="Open User Profile"
           >
             <div className="w-6 h-6 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-[10px] font-bold">
@@ -462,7 +462,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
 
           <button
             onClick={() => setIsMobileOpen(true)}
-            className="text-slate-300 hover:text-white p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             title="Open Navigation Menu"
           >
             <Menu className="w-5 h-5" />
@@ -472,7 +472,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
 
       {/* Desktop Sidebar */}
       <aside className={cn(
-        "hidden md:flex bg-slate-900 flex-col border-r border-slate-800 transition-all duration-300 ease-in-out shrink-0 overflow-visible relative z-30",
+        "hidden md:flex bg-white dark:bg-slate-900 flex-col border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out shrink-0 overflow-visible relative z-30",
         isCollapsed ? "w-20" : "w-64"
       )}>
         {sidebarContent}
@@ -482,10 +482,10 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div 
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/60 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMobileOpen(false)}
           />
-          <aside className="relative bg-slate-900 w-72 max-w-[80vw] h-full flex flex-col z-10 shadow-2xl">
+          <aside className="relative bg-white dark:bg-slate-900 w-72 max-w-[80vw] h-full flex flex-col z-10 shadow-2xl">
             {sidebarContent}
           </aside>
         </div>
@@ -676,7 +676,7 @@ export default function App() {
             <div>
               <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Username</label>
               <div className="relative">
-                <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <UserIcon className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="text" 
                   value={username}
@@ -690,7 +690,7 @@ export default function App() {
             <div>
               <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Password</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="password" 
                   value={password}
@@ -711,7 +711,7 @@ export default function App() {
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50 text-[11px] text-slate-400 dark:text-slate-500 font-medium font-sans">
+          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-200 dark:border-slate-800 dark:border-slate-200 dark:border-slate-700/50 text-[11px] text-slate-400 dark:text-slate-500 font-medium font-sans">
             Developed by <span className="text-slate-700 dark:text-slate-300 font-semibold">Saw Pyae Phyo Kyaw</span>
           </div>
         </motion.div>

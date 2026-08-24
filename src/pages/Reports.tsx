@@ -487,16 +487,16 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
 
   return (
     <>
-      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0 print:hidden">
+      <header className="min-h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0 print:hidden">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
             Reports & Analytics
           </h1>
-          <p className="text-xs text-slate-500">Comprehensive IT operation analytics, KPI metrics, and exports</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Comprehensive IT operation analytics, KPI metrics, and exports</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <button onClick={exportCSV} className="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm hover:bg-slate-50 flex items-center gap-2 transition-colors min-h-[44px]">
+          <button onClick={exportCSV} className="px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors min-h-[44px]">
             <Download className="w-4 h-4" /> Export CSV ({activeTab.toUpperCase()})
           </button>
           <button onClick={printPDF} className="px-3 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 flex items-center gap-2 transition-colors min-h-[44px]">
@@ -505,46 +505,46 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
         </div>
       </header>
 
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8 bg-slate-50/50">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8 bg-slate-50/50 dark:bg-slate-900/50">
         {loading ? (
-          <div className="flex items-center justify-center h-64 text-slate-500 font-medium">
+          <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400 font-medium">
             <Clock className="w-5 h-5 animate-spin mr-2" /> Loading reports and calculating analytics...
           </div>
         ) : (
           <>
             {/* KPI Metrics Dashboard Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
                 <div className="absolute right-0 top-0 h-12 w-12 bg-blue-50 rounded-bl-3xl flex items-center justify-center">
                   <Ticket className="w-5 h-5 text-blue-500" />
                 </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Support Tickets</p>
-                <p className="text-2xl font-extrabold text-slate-900 mt-2">{metrics.totalT}</p>
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Support Tickets</p>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.totalT}</p>
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Resolution Rate:</span>
                   <span className="font-bold text-emerald-600">{metrics.resolutionRate}%</span>
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
                 <div className="absolute right-0 top-0 h-12 w-12 bg-amber-50 rounded-bl-3xl flex items-center justify-center">
                   <Wrench className="w-5 h-5 text-amber-500" />
                 </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Repairs</p>
-                <p className="text-2xl font-extrabold text-slate-900 mt-2">{metrics.activeRepairsCount}</p>
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Repairs</p>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.activeRepairsCount}</p>
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Total Repairs Logged:</span>
-                  <span className="font-bold text-slate-700">{repairs.length}</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">{repairs.length}</span>
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
                 <div className="absolute right-0 top-0 h-12 w-12 bg-red-50 rounded-bl-3xl flex items-center justify-center">
                   <Globe className="w-5 h-5 text-red-500" />
                 </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">ISP Downtime</p>
-                <p className="text-2xl font-extrabold text-slate-900 mt-2">{metrics.totalDowntimeHrs}h</p>
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">ISP Downtime</p>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.totalDowntimeHrs}h</p>
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Unstable ISP Connections:</span>
                   <span className="font-bold text-red-600">
                     {isps.filter(i => i.currentStatus !== 'online').length}
@@ -552,25 +552,25 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
                 <div className="absolute right-0 top-0 h-12 w-12 bg-emerald-50 rounded-bl-3xl flex items-center justify-center">
                   <ShieldAlert className="w-5 h-5 text-emerald-500" />
                 </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Licenses Expiring</p>
-                <p className="text-2xl font-extrabold text-slate-900 mt-2">{metrics.expiringSoonCount}</p>
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Licenses Expiring</p>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.expiringSoonCount}</p>
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Total Monitored:</span>
-                  <span className="font-bold text-slate-700">{licenses.length} items</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">{licenses.length} items</span>
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
                 <div className="absolute right-0 top-0 h-12 w-12 bg-rose-50 rounded-bl-3xl flex items-center justify-center">
                   <AlertTriangle className="w-5 h-5 text-rose-500" />
                 </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Critical Tickets</p>
-                <p className="text-2xl font-extrabold text-slate-900 mt-2">{metrics.criticalTicketsCount}</p>
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Critical Tickets</p>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.criticalTicketsCount}</p>
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Needs Instant Action:</span>
                   <span className={`font-bold ${metrics.criticalTicketsCount > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                     {metrics.criticalTicketsCount > 0 ? 'Urgent Response' : 'All Clear'}
@@ -582,9 +582,9 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
             {/* Visual Charts section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Tickets Status Chart */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-blue-500" /> Tickets by Current Status
                   </h2>
                   <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100">Live</span>
@@ -607,9 +607,9 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
               </div>
 
               {/* Tickets Priority Trend Chart */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-emerald-500" /> Tickets Priority Trend
                   </h2>
                   <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded border border-emerald-100">Date Log</span>
@@ -642,9 +642,9 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
               </div>
 
               {/* Repairs Overview Chart */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                     <Wrench className="w-4 h-4 text-amber-500" /> Device Repairs Overview
                   </h2>
                 </div>
@@ -673,9 +673,9 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
               </div>
 
               {/* ISP Downtime Chart */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                     <Globe className="w-4 h-4 text-red-500" /> Total Downtime by ISP (Hours)
                   </h2>
                 </div>
@@ -691,7 +691,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
                       <Globe className="w-10 h-10 mb-2 stroke-1 opacity-40" />
                       <p className="text-xs">No downtime hours logged yet</p>
                     </div>
@@ -701,59 +701,59 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
             </div>
 
             {/* Detailed logs & tables section (NEW ADDED DETAIL SECTIONS) */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden print:hidden">
-              <div className="border-b border-slate-200 bg-slate-50/70 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden print:hidden">
+              <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/70 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                     <Info className="w-4 h-4 text-blue-500" /> Detailed Operation Logs & Records
                   </h2>
-                  <p className="text-xs text-slate-500 mt-1">Audit, search, and view granular system data</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Audit, search, and view granular system data</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                   {/* Search Bar */}
                   <div className="relative">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" />
                     <input 
                       type="text" 
                       placeholder="Search records..." 
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      className="bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-800 w-full sm:w-60 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-800 dark:text-slate-200 w-full sm:w-60 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Tab Navigation */}
-              <div className="flex border-b border-slate-200 overflow-x-auto bg-slate-50/30">
+              <div className="flex border-b border-slate-200 dark:border-slate-700 overflow-x-auto bg-slate-50/30">
                 <button 
                   onClick={() => { setActiveTab('tickets'); setSearchQuery(''); }}
-                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${activeTab === 'tickets' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${activeTab === 'tickets' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
                 >
                   Tickets ({filteredTickets.length})
                 </button>
                 <button 
                   onClick={() => { setActiveTab('repairs'); setSearchQuery(''); }}
-                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${activeTab === 'repairs' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${activeTab === 'repairs' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
                 >
                   Repairs ({filteredRepairs.length})
                 </button>
                 <button 
                   onClick={() => { setActiveTab('isps'); setSearchQuery(''); }}
-                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${activeTab === 'isps' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${activeTab === 'isps' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
                 >
                   ISP Nodes ({filteredIsps.length})
                 </button>
                 <button 
                   onClick={() => { setActiveTab('licenses'); setSearchQuery(''); }}
-                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${activeTab === 'licenses' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${activeTab === 'licenses' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
                 >
                   Software & Domains ({filteredLicenses.length})
                 </button>
                 <button 
                   onClick={() => { setActiveTab('email_alerts'); setSearchQuery(''); }}
-                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'email_alerts' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'email_alerts' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
                 >
                   <Mail className="w-3.5 h-3.5" />
                   Mail & Alert Logs ({filteredEmailLogs.length})
@@ -765,7 +765,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 {activeTab === 'tickets' && (
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/50 border-b border-slate-200 text-slate-400 text-[10px] uppercase font-extrabold tracking-wider">
+                      <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-extrabold tracking-wider">
                         <th className="px-6 py-3">Code</th>
                         <th className="px-6 py-3">Ticket Title</th>
                         <th className="px-6 py-3">Priority</th>
@@ -776,11 +776,11 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                         <th className="px-6 py-3">Created At</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                       {filteredTickets.map((t) => (
                         <tr key={t.id} className="hover:bg-slate-50/40 transition-colors">
-                          <td className="px-6 py-3 font-mono font-bold text-slate-500">{t.ticketCode || "N/A"}</td>
-                          <td className="px-6 py-3 font-semibold text-slate-800">{t.title}</td>
+                          <td className="px-6 py-3 font-mono font-bold text-slate-500 dark:text-slate-400">{t.ticketCode || "N/A"}</td>
+                          <td className="px-6 py-3 font-semibold text-slate-800 dark:text-slate-200">{t.title}</td>
                           <td className="px-6 py-3">
                             <span 
                               className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border"
@@ -793,26 +793,20 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                               {t.priority}
                             </span>
                           </td>
-                          <td className="px-6 py-3 text-slate-600 font-medium">{t.requestDept || "General"}</td>
-                          <td className="px-6 py-3 text-slate-500">{t.requestUsername || "N/A"}</td>
-                          <td className="px-6 py-3 text-slate-700 font-medium">{usersMap[t.assigneeId] || 'Unassigned'}</td>
+                          <td className="px-6 py-3 text-slate-600 dark:text-slate-400 font-medium">{t.requestDept || "General"}</td>
+                          <td className="px-6 py-3 text-slate-500 dark:text-slate-400">{t.requestUsername || "N/A"}</td>
+                          <td className="px-6 py-3 text-slate-700 dark:text-slate-300 font-medium">{usersMap[t.assigneeId] || 'Unassigned'}</td>
                           <td className="px-6 py-3">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                              t.status === 'resolved' || t.status === 'closed' 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                                : t.status === 'in_progress' 
-                                  ? 'bg-blue-50 text-blue-700 border-blue-100' 
-                                  : 'bg-amber-50 text-amber-700 border-amber-100'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${ t.status === 'resolved' || t.status === 'closed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : t.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100' }`}>
                               {t.status?.replace('_', ' ')}
                             </span>
                           </td>
-                          <td className="px-6 py-3 text-slate-500 font-mono">{formatDate(t.createdAt)}</td>
+                          <td className="px-6 py-3 text-slate-500 dark:text-slate-400 font-mono">{formatDate(t.createdAt)}</td>
                         </tr>
                       ))}
                       {filteredTickets.length === 0 && (
                         <tr>
-                          <td colSpan={8} className="text-center py-12 text-slate-400">No support tickets found</td>
+                          <td colSpan={8} className="text-center py-12 text-slate-400 dark:text-slate-500">No support tickets found</td>
                         </tr>
                       )}
                     </tbody>
@@ -822,7 +816,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 {activeTab === 'repairs' && (
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/50 border-b border-slate-200 text-slate-400 text-[10px] uppercase font-extrabold tracking-wider">
+                      <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-extrabold tracking-wider">
                         <th className="px-6 py-3">Code</th>
                         <th className="px-6 py-3">Repair Project</th>
                         <th className="px-6 py-3">Device Target</th>
@@ -832,31 +826,25 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                         <th className="px-6 py-3">Created At</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                       {filteredRepairs.map((r) => (
                         <tr key={r.id} className="hover:bg-slate-50/40 transition-colors">
-                          <td className="px-6 py-3 font-mono font-bold text-slate-500">{r.repairCode || "N/A"}</td>
-                          <td className="px-6 py-3 font-semibold text-slate-800">{r.title}</td>
-                          <td className="px-6 py-3 text-slate-600 font-medium">{r.device}</td>
-                          <td className="px-6 py-3 text-slate-500">{r.shopCenterName || "Internal"}</td>
-                          <td className="px-6 py-3 text-slate-700 font-medium">{usersMap[r.mechanicId] || 'Unassigned'}</td>
+                          <td className="px-6 py-3 font-mono font-bold text-slate-500 dark:text-slate-400">{r.repairCode || "N/A"}</td>
+                          <td className="px-6 py-3 font-semibold text-slate-800 dark:text-slate-200">{r.title}</td>
+                          <td className="px-6 py-3 text-slate-600 dark:text-slate-400 font-medium">{r.device}</td>
+                          <td className="px-6 py-3 text-slate-500 dark:text-slate-400">{r.shopCenterName || "Internal"}</td>
+                          <td className="px-6 py-3 text-slate-700 dark:text-slate-300 font-medium">{usersMap[r.mechanicId] || 'Unassigned'}</td>
                           <td className="px-6 py-3">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                              r.status === 'completed' 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                                : r.status === 'ongoing' 
-                                  ? 'bg-blue-50 text-blue-700 border-blue-100' 
-                                  : 'bg-amber-50 text-amber-700 border-amber-100'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${ r.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : r.status === 'ongoing' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100' }`}>
                               {r.status}
                             </span>
                           </td>
-                          <td className="px-6 py-3 text-slate-500 font-mono">{formatDate(r.createdAt)}</td>
+                          <td className="px-6 py-3 text-slate-500 dark:text-slate-400 font-mono">{formatDate(r.createdAt)}</td>
                         </tr>
                       ))}
                       {filteredRepairs.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="text-center py-12 text-slate-400">No repair logs found</td>
+                          <td colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500">No repair logs found</td>
                         </tr>
                       )}
                     </tbody>
@@ -866,7 +854,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 {activeTab === 'isps' && (
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/50 border-b border-slate-200 text-slate-400 text-[10px] uppercase font-extrabold tracking-wider">
+                      <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-extrabold tracking-wider">
                         <th className="px-6 py-3">ISP Partner</th>
                         <th className="px-6 py-3">Branch Office</th>
                         <th className="px-6 py-3">Bandwidth Speed</th>
@@ -876,25 +864,19 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                         <th className="px-6 py-3">Current Node State</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                       {filteredIsps.map((isp) => {
                         const totalHours = (isp.downtimeRecords || []).reduce((sum: number, r: any) => sum + parseFloat(r.duration || '0'), 0);
                         return (
                           <tr key={isp.id} className="hover:bg-slate-50/40 transition-colors">
-                            <td className="px-6 py-3 font-semibold text-slate-800">{isp.ispName}</td>
-                            <td className="px-6 py-3 text-slate-600 font-medium">{isp.branchOffice}</td>
-                            <td className="px-6 py-3 text-slate-500 font-mono">{isp.speed || "N/A"}</td>
-                            <td className="px-6 py-3 text-slate-500 font-mono">{isp.userIdDeviceId || "N/A"}</td>
-                            <td className="px-6 py-3 text-slate-600 font-bold">{(isp.downtimeRecords || []).length} occurrences</td>
+                            <td className="px-6 py-3 font-semibold text-slate-800 dark:text-slate-200">{isp.ispName}</td>
+                            <td className="px-6 py-3 text-slate-600 dark:text-slate-400 font-medium">{isp.branchOffice}</td>
+                            <td className="px-6 py-3 text-slate-500 dark:text-slate-400 font-mono">{isp.speed || "N/A"}</td>
+                            <td className="px-6 py-3 text-slate-500 dark:text-slate-400 font-mono">{isp.userIdDeviceId || "N/A"}</td>
+                            <td className="px-6 py-3 text-slate-600 dark:text-slate-400 font-bold">{(isp.downtimeRecords || []).length} occurrences</td>
                             <td className="px-6 py-3 font-semibold text-red-600 font-mono">{totalHours.toFixed(1)} Hours</td>
                             <td className="px-6 py-3">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                                isp.currentStatus === 'online' 
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                                  : isp.currentStatus === 'offline' 
-                                    ? 'bg-red-50 text-red-700 border-red-100' 
-                                    : 'bg-amber-50 text-amber-700 border-amber-100'
-                              }`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${ isp.currentStatus === 'online' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : isp.currentStatus === 'offline' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100' }`}>
                                 {isp.currentStatus || 'online'}
                               </span>
                             </td>
@@ -903,7 +885,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                       })}
                       {filteredIsps.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="text-center py-12 text-slate-400">No ISP accounts found</td>
+                          <td colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500">No ISP accounts found</td>
                         </tr>
                       )}
                     </tbody>
@@ -913,7 +895,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 {activeTab === 'licenses' && (
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/50 border-b border-slate-200 text-slate-400 text-[10px] uppercase font-extrabold tracking-wider">
+                      <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-extrabold tracking-wider">
                         <th className="px-6 py-3">Resource/Domain Name</th>
                         <th className="px-6 py-3">Resource Type</th>
                         <th className="px-6 py-3">Urgency Status</th>
@@ -922,7 +904,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                         <th className="px-6 py-3">Notes / Details</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                       {filteredLicenses.map((l) => {
                         let daysLeft = 0;
                         if (l.expiryDate) {
@@ -930,26 +912,20 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                         }
                         return (
                           <tr key={l.id} className="hover:bg-slate-50/40 transition-colors">
-                            <td className="px-6 py-3 font-semibold text-slate-800">{l.name}</td>
-                            <td className="px-6 py-3 uppercase text-[10px] text-slate-500 font-bold">{l.type || "N/A"}</td>
+                            <td className="px-6 py-3 font-semibold text-slate-800 dark:text-slate-200">{l.name}</td>
+                            <td className="px-6 py-3 uppercase text-[10px] text-slate-500 dark:text-slate-400 font-bold">{l.type || "N/A"}</td>
                             <td className="px-6 py-3">
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                daysLeft < 0 
-                                  ? 'bg-red-50 text-red-700 border-red-100' 
-                                  : daysLeft <= 30 
-                                    ? 'bg-amber-50 text-amber-700 border-amber-100' 
-                                    : 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                              }`}>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${ daysLeft < 0 ? 'bg-red-50 text-red-700 border-red-100' : daysLeft <= 30 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100' }`}>
                                 {daysLeft < 0 ? "EXPIRED" : daysLeft <= 30 ? "URGENT EXPIRY" : "ACTIVE"}
                               </span>
                             </td>
-                            <td className="px-6 py-3 text-slate-600 font-mono">
+                            <td className="px-6 py-3 text-slate-600 dark:text-slate-400 font-mono">
                               {l.expiryDate ? format(new Date(l.expiryDate), 'yyyy-MM-dd') : "N/A"}
                             </td>
                             <td className={`px-6 py-3 font-bold font-mono ${daysLeft < 0 ? 'text-red-600' : daysLeft <= 30 ? 'text-amber-600' : 'text-slate-600'}`}>
                               {daysLeft < 0 ? `${Math.abs(daysLeft)} days ago` : `${daysLeft} days`}
                             </td>
-                            <td className="px-6 py-3 text-slate-500 max-w-xs truncate" title={l.notes || l.details}>
+                            <td className="px-6 py-3 text-slate-500 dark:text-slate-400 max-w-xs truncate" title={l.notes || l.details}>
                               {l.notes || l.details || "N/A"}
                             </td>
                           </tr>
@@ -957,7 +933,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                       })}
                       {filteredLicenses.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="text-center py-12 text-slate-400">No tracked items found</td>
+                          <td colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">No tracked items found</td>
                         </tr>
                       )}
                     </tbody>
@@ -968,11 +944,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                   <div className="p-6 space-y-6">
                     {/* Feedback Toast */}
                     {emailFeedback && (
-                      <div className={`p-4 rounded-xl border flex items-center justify-between gap-3 text-sm font-medium ${
-                        emailFeedback.type === 'success' 
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
-                          : 'bg-rose-50 text-rose-800 border-rose-200'
-                      }`}>
+                      <div className={`p-4 rounded-xl border flex items-center justify-between gap-3 text-sm font-medium ${ emailFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200' }`}>
                         <div className="flex items-center gap-2">
                           {emailFeedback.type === 'success' ? (
                             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -983,7 +955,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                         </div>
                         <button 
                           onClick={() => setEmailFeedback(null)}
-                          className="text-xs text-slate-400 hover:text-slate-600"
+                          className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600"
                         >
                           Dismiss
                         </button>
@@ -993,14 +965,14 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                     {/* Top Configuration Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Left: Email Alert Recipients */}
-                      <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-5 space-y-4">
+                      <div className="bg-slate-50/70 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                               <Mail className="w-4 h-4 text-blue-600" />
                               Alert Recipients List
                             </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                               Team members who receive automated outage & maintenance emails.
                             </p>
                           </div>
@@ -1012,7 +984,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                         {/* Add Recipient Form */}
                         <div className="flex flex-col sm:flex-row gap-2">
                           <div className="relative flex-1">
-                            <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                             <input
                               type="email"
                               value={recipientInput}
@@ -1024,7 +996,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                                 }
                               }}
                               placeholder="Enter email e.g. ops@mtknitsm.com"
-                              className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono"
+                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 dark:text-slate-200 font-mono"
                             />
                           </div>
                           <button
@@ -1045,7 +1017,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                             <button
                               type="button"
                               onClick={handleAddCurrentUserEmail}
-                              className="text-xs font-bold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 px-2.5 py-1 rounded shadow-sm hover:bg-blue-50 transition-colors"
+                              className="text-xs font-bold text-blue-700 hover:text-blue-900 bg-white dark:bg-slate-800 border border-blue-200 px-2.5 py-1 rounded shadow-sm hover:bg-blue-50 transition-colors"
                             >
                               + Add My Email
                             </button>
@@ -1054,24 +1026,24 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
 
                         {/* Recipients Chips */}
                         <div className="space-y-1.5 pt-2">
-                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             Active Email List
                           </label>
                           {recipients.length === 0 ? (
-                            <p className="text-xs text-slate-400 italic py-2">No email recipients configured yet.</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">No email recipients configured yet.</p>
                           ) : (
                             <div className="flex flex-wrap gap-2">
                               {recipients.map((email) => (
                                 <span
                                   key={email}
-                                  className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-mono shadow-xs group hover:border-slate-300"
+                                  className="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg text-xs font-mono shadow-xs group hover:border-slate-300"
                                 >
                                   <Mail className="w-3 h-3 text-blue-500" />
                                   <span>{email}</span>
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveRecipient(email)}
-                                    className="text-slate-400 hover:text-rose-600 ml-1 transition-colors p-0.5 rounded"
+                                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 ml-1 transition-colors p-0.5 rounded"
                                     title={`Remove ${email}`}
                                   >
                                     <Trash2 className="w-3 h-3" />
@@ -1084,7 +1056,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
 
                         {/* Save Button */}
                         <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
-                          <span className="text-[11px] text-slate-400">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500">
                             Saved globally in Firestore settings
                           </span>
                           <button
@@ -1100,40 +1072,36 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                       </div>
 
                       {/* Right: Automated Mail Gateway (EmailJS / REST) */}
-                      <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-5 space-y-4">
+                      <div className="bg-slate-50/70 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                              <Settings className="w-4 h-4 text-slate-600" />
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                              <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                               Automated Email Dispatch Gateway
                             </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                               Configure EmailJS REST API keys for automatic ISP outage notifications.
                             </p>
                           </div>
                         </div>
 
                         {/* Enable Switch */}
-                        <div className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
+                        <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
                           <div>
-                            <p className="text-xs font-bold text-slate-800">
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
                               Enable Automated Outage Alerts
                             </p>
-                            <p className="text-[11px] text-slate-400 mt-0.5">
+                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                               Triggers instant email alerts to all recipients on network downtime.
                             </p>
                           </div>
                           <button
                             type="button"
                             onClick={() => setEmailjsEnabled(!emailjsEnabled)}
-                            className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                              emailjsEnabled ? 'bg-blue-600' : 'bg-slate-300'
-                            }`}
+                            className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${ emailjsEnabled ? 'bg-blue-600' : 'bg-slate-300' }`}
                           >
                             <div
-                              className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                                emailjsEnabled ? 'translate-x-5' : 'translate-x-0'
-                              }`}
+                              className={`bg-white dark:bg-slate-800 w-4 h-4 rounded-full shadow-md transform transition-transform ${ emailjsEnabled ? 'translate-x-5' : 'translate-x-0' }`}
                             />
                           </button>
                         </div>
@@ -1141,7 +1109,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                         {/* EmailJS Credentials */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
                               Service ID
                             </label>
                             <input
@@ -1149,11 +1117,11 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                               value={emailjsServiceId}
                               onChange={(e) => setEmailjsServiceId(e.target.value)}
                               placeholder="e.g. service_xxxx"
-                              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-blue-500"
+                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none focus:border-blue-500"
                             />
                           </div>
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
                               Template ID
                             </label>
                             <input
@@ -1161,11 +1129,11 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                               value={emailjsTemplateId}
                               onChange={(e) => setEmailjsTemplateId(e.target.value)}
                               placeholder="e.g. template_xxxx"
-                              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-blue-500"
+                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none focus:border-blue-500"
                             />
                           </div>
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
                               Public Key
                             </label>
                             <input
@@ -1173,7 +1141,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                               value={emailjsPublicKey}
                               onChange={(e) => setEmailjsPublicKey(e.target.value)}
                               placeholder="e.g. user_xxxx"
-                              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-blue-500"
+                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
@@ -1188,9 +1156,9 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                             )}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
+                            className="px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1.5"
                           >
-                            <Mail className="w-3.5 h-3.5 text-slate-500" />
+                            <Mail className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                             Open Mail Client
                           </a>
 
@@ -1210,13 +1178,13 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                     </div>
 
                     {/* Dispatched Email Alerts Logs Audit Table */}
-                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
-                      <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
+                    <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-xs">
+                      <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <div>
-                          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                          <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                             Dispatched Email Alerts Audit Log ({filteredEmailLogs.length})
                           </h4>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                             Historical records of automated & manual alerts dispatched by the system
                           </p>
                         </div>
@@ -1224,7 +1192,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
 
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50/50 border-b border-slate-200 text-slate-400 text-[10px] uppercase font-extrabold tracking-wider">
+                          <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-extrabold tracking-wider">
                             <th className="px-6 py-3">Timestamp</th>
                             <th className="px-6 py-3">Type</th>
                             <th className="px-6 py-3">Subject & Message Preview</th>
@@ -1232,36 +1200,28 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                             <th className="px-6 py-3">Status</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-xs">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                           {filteredEmailLogs.map((log, idx) => (
                             <tr key={log.id || idx} className="hover:bg-slate-50/40 transition-colors">
-                              <td className="px-6 py-3 font-mono text-slate-500 whitespace-nowrap">
+                              <td className="px-6 py-3 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
                                 {formatDate(log.timestamp || log.createdAt)}
                               </td>
                               <td className="px-6 py-3">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                  log.type === 'isp_down'
-                                    ? 'bg-red-50 text-red-700 border-red-200'
-                                    : 'bg-blue-50 text-blue-700 border-blue-200'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${ log.type === 'isp_down' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200' }`}>
                                   {log.type === 'isp_down' ? '🛑 Outage' : '📝 Update'}
                                 </span>
                               </td>
                               <td className="px-6 py-3">
-                                <p className="font-semibold text-slate-800">{log.subject}</p>
-                                <p className="text-[11px] text-slate-500 truncate max-w-md mt-0.5">
+                                <p className="font-semibold text-slate-800 dark:text-slate-200">{log.subject}</p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-md mt-0.5">
                                   {log.body?.split('\n')[0] || log.body || "No preview"}
                                 </p>
                               </td>
-                              <td className="px-6 py-3 text-slate-600 font-mono text-[11px]">
+                              <td className="px-6 py-3 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
                                 {Array.isArray(log.recipients) ? log.recipients.join(', ') : (log.recipients || "N/A")}
                               </td>
                               <td className="px-6 py-3">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                  log.status === 'sent'
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                    : 'bg-rose-50 text-rose-700 border-rose-200'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${ log.status === 'sent' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }`}>
                                   {log.status === 'sent' ? 'Sent' : 'Failed'}
                                 </span>
                               </td>
@@ -1269,7 +1229,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                           ))}
                           {filteredEmailLogs.length === 0 && (
                             <tr>
-                              <td colSpan={5} className="text-center py-12 text-slate-400">
+                              <td colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
                                 No email alert logs recorded yet. Send a test alert above to create one!
                               </td>
                             </tr>

@@ -44,12 +44,7 @@ const CustomHeatmapTooltip = ({ active, payload }: any) => {
       <div className="bg-slate-900 text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 space-y-1.5 min-w-[170px]">
         <div className="font-bold text-slate-100 border-b border-slate-800 pb-1 flex items-center justify-between gap-2">
           <span>{data.category}</span>
-          <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-extrabold ${
-            data.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' :
-            data.priority === 'High' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-            data.priority === 'Medium' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
-            'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-          }`}>
+          <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-extrabold ${ data.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : data.priority === 'High' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : data.priority === 'Medium' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' }`}>
             {data.priority}
           </span>
         </div>
@@ -316,19 +311,19 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
 
   return (
     <>
-      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex items-center justify-between shrink-0">
+      <header className="min-h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-0 flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-600" />
             Executive Overview
           </h1>
-          <p className="text-xs text-slate-500">Real-time IT infrastructure and support operations dashboard</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Real-time IT infrastructure and support operations dashboard</p>
         </div>
       </header>
 
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto bg-slate-50/50">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/50">
         {loading ? (
-          <div className="flex items-center justify-center h-64 text-slate-500 font-medium">
+          <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400 font-medium">
             <Clock className="w-5 h-5 animate-spin mr-2" /> Loading real-time metrics...
           </div>
         ) : (
@@ -339,16 +334,16 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                 <Link 
                   key={card.name} 
                   to={card.link}
-                  className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all group"
+                  className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-slate-300 transition-all group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{card.name}</span>
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{card.name}</span>
                     <div className={`p-2 rounded-lg ${card.bg} transition-transform group-hover:scale-105`}>
                       <card.icon className={`h-4 w-4 ${card.color}`} aria-hidden="true" />
                     </div>
                   </div>
                   <div className="flex items-end justify-between mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 leading-none">{card.value}</span>
+                    <span className="text-3xl font-extrabold text-slate-900 dark:text-white leading-none">{card.value}</span>
                     <span className="text-[10px] text-blue-500 font-semibold group-hover:underline flex items-center gap-0.5">
                       View <ArrowRight className="w-3 h-3" />
                     </span>
@@ -364,11 +359,11 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                <div className="lg:col-span-2 space-y-8">
                   
                   {/* Critical Network Alerts */}
-                  <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 text-red-500" />
-                        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Critical Network Alerts</h2>
+                        <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Critical Network Alerts</h2>
                       </div>
                       <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full border border-red-200">
                         {offlineISPs.length} Active Incidents
@@ -381,13 +376,13 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                             <div key={isp.id} className="p-4 bg-rose-50/50 border border-red-100 rounded-xl flex items-start gap-3">
                               <Globe className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
                               <div className="flex-1 min-w-0">
-                                 <p className="text-sm font-bold text-slate-800 truncate">{isp.ispName}</p>
-                                 <p className="text-xs text-slate-500 mt-0.5 font-medium">{isp.branchOffice}</p>
-                                 <div className="flex items-center gap-3 mt-3 text-[10px] text-slate-500">
+                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{isp.ispName}</p>
+                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">{isp.branchOffice}</p>
+                                 <div className="flex items-center gap-3 mt-3 text-[10px] text-slate-500 dark:text-slate-400">
                                    <span className="flex items-center gap-1">
                                      <Clock className="w-3 h-3 text-red-400" /> Current state:
                                    </span>
-                                   <span className="font-extrabold uppercase text-red-600 bg-white px-2 py-0.5 rounded border border-red-200">
+                                   <span className="font-extrabold uppercase text-red-600 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-red-200">
                                      {isp.currentStatus}
                                    </span>
                                  </div>
@@ -396,34 +391,34 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-10 text-slate-400">
+                        <div className="text-center py-10 text-slate-400 dark:text-slate-500">
                           <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-500 opacity-60" />
-                          <p className="text-sm font-bold text-slate-700">All Network Nodes Stable</p>
-                          <p className="text-xs text-slate-500 mt-1">No outstanding offline or degraded ISPs flagged currently.</p>
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">All Network Nodes Stable</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">No outstanding offline or degraded ISPs flagged currently.</p>
                         </div>
                       )}
                     </div>
                   </div>
 
                   {/* Priority Heatmap Widget (Open Ticket Density) */}
-                  <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col space-y-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-6 flex flex-col space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                       <div>
                         <div className="flex items-center gap-2">
                           <div className="p-1.5 bg-rose-50 text-rose-600 rounded-lg border border-rose-100">
                             <Flame className="w-4 h-4" />
                           </div>
-                          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Priority Heatmap (Open Ticket Density)</h2>
+                          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Priority Heatmap (Open Ticket Density)</h2>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">Visualize density of active issues based on priority level and category</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Visualize density of active issues based on priority level and category</p>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <div className="bg-slate-100 p-0.5 rounded-lg flex items-center text-xs font-semibold">
+                        <div className="bg-slate-100 dark:bg-slate-800/50 p-0.5 rounded-lg flex items-center text-xs font-semibold">
                           <button
                             type="button"
                             onClick={() => setHeatmapViewMode('grid')}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all cursor-pointer ${heatmapViewMode === 'grid' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all cursor-pointer ${heatmapViewMode === 'grid' ? 'bg-white text-slate-900 dark:text-white shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
                           >
                             <Grid className="w-3.5 h-3.5" />
                             <span>Matrix</span>
@@ -431,7 +426,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                           <button
                             type="button"
                             onClick={() => setHeatmapViewMode('bars')}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all cursor-pointer ${heatmapViewMode === 'bars' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all cursor-pointer ${heatmapViewMode === 'bars' ? 'bg-white text-slate-900 dark:text-white shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
                           >
                             <BarChart3 className="w-3.5 h-3.5" />
                             <span>Stacked</span>
@@ -446,30 +441,30 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
 
                     {/* Quick Insights Metric Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div className="bg-slate-50/70 border border-slate-100 p-3 rounded-lg flex items-center justify-between">
+                      <div className="bg-slate-50/70 border border-slate-100 dark:border-slate-800 p-3 rounded-lg flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Highest Category Load</p>
-                          <p className="text-xs font-bold text-slate-800 mt-0.5">{heatmapMetrics.peakCategory}</p>
+                          <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Highest Category Load</p>
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">{heatmapMetrics.peakCategory}</p>
                         </div>
                         <span className="text-xs font-mono font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                           {heatmapMetrics.peakCount} Open
                         </span>
                       </div>
 
-                      <div className="bg-slate-50/70 border border-slate-100 p-3 rounded-lg flex items-center justify-between">
+                      <div className="bg-slate-50/70 border border-slate-100 dark:border-slate-800 p-3 rounded-lg flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">High & Critical Density</p>
-                          <p className="text-xs font-bold text-slate-800 mt-0.5">High Severity Cluster</p>
+                          <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">High & Critical Density</p>
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">High Severity Cluster</p>
                         </div>
                         <span className="text-xs font-mono font-extrabold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">
                           {heatmapMetrics.criticalOrHigh} Tickets
                         </span>
                       </div>
 
-                      <div className="bg-slate-50/70 border border-slate-100 p-3 rounded-lg flex items-center justify-between">
+                      <div className="bg-slate-50/70 border border-slate-100 dark:border-slate-800 p-3 rounded-lg flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Active Open Volume</p>
-                          <p className="text-xs font-bold text-slate-800 mt-0.5">Unresolved Total</p>
+                          <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Open Volume</p>
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">Unresolved Total</p>
                         </div>
                         <span className="text-xs font-mono font-extrabold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
                           {heatmapMetrics.totalOpen} Issues
@@ -531,11 +526,11 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
 
                     {/* Heatmap Legend */}
                     {heatmapViewMode === 'grid' && (
-                      <div className="flex flex-wrap items-center justify-between pt-3 border-t border-slate-100 text-[11px] text-slate-500 gap-2">
-                        <span className="font-semibold text-slate-600">Density Legend:</span>
+                      <div className="flex flex-wrap items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 gap-2">
+                        <span className="font-semibold text-slate-600 dark:text-slate-400">Density Legend:</span>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1">
-                            <span className="w-3 h-3 rounded bg-slate-100 border border-slate-200"></span>
+                            <span className="w-3 h-3 rounded bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"></span>
                             <span>0 (Clear)</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -556,13 +551,13 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                   </div>
 
                   {/* Active Support Tickets Load Trend */}
-                  <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-6 flex flex-col">
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                           <Ticket className="w-4 h-4 text-blue-500" /> Support Ticket Creation Trend
                         </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">Frequency of support tickets logged daily</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Frequency of support tickets logged daily</p>
                       </div>
                       <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100">7 Dates</span>
                     </div>
@@ -584,7 +579,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                           </AreaChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div className="flex items-center justify-center h-full text-slate-400 text-xs">
+                        <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500 text-xs">
                           No ticket trend data available yet
                         </div>
                       )}
@@ -592,9 +587,9 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                   </div>
 
                   {/* Urgent Attention / Action Items */}
-                  <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50">
-                      <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+                      <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                         <ShieldAlert className="w-4 h-4 text-rose-500" /> Pending Action Items (Unassigned Critical)
                       </h2>
                     </div>
@@ -602,21 +597,21 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                       {unassignedCriticalTickets.length > 0 ? (
                         <div className="space-y-3">
                           {unassignedCriticalTickets.map(ticket => (
-                            <div key={ticket.id} className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-lg">
+                            <div key={ticket.id} className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
                               <div className="min-w-0 flex-1 pr-4">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-mono font-bold bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">
+                                  <span className="text-[10px] font-mono font-bold bg-slate-200 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400">
                                     {ticket.ticketCode || "N/A"}
                                   </span>
                                   <span className="text-[10px] font-extrabold uppercase text-rose-600 bg-rose-50 border border-rose-100 px-1.5 rounded">
                                     {ticket.priority}
                                   </span>
                                 </div>
-                                <p className="text-sm font-bold text-slate-800 mt-1 truncate">{ticket.title}</p>
-                                <p className="text-xs text-slate-500 mt-0.5 font-medium">{ticket.requestDept} • Reporter: {ticket.requestUsername}</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 truncate">{ticket.title}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">{ticket.requestDept} • Reporter: {ticket.requestUsername}</p>
                               </div>
                               {userRole === 'management' ? (
-                                <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-xs font-semibold rounded shrink-0 font-mono">
+                                <span className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-semibold rounded shrink-0 font-mono">
                                   UNASSIGNED
                                 </span>
                               ) : (
@@ -631,10 +626,10 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-6 text-slate-400">
+                        <div className="text-center py-6 text-slate-400 dark:text-slate-500">
                           <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-500 opacity-60" />
-                          <p className="text-xs font-bold text-slate-700">No Unassigned Critical Tickets</p>
-                          <p className="text-[11px] text-slate-500 mt-0.5">All high priority issues are currently assigned to IT Assistants.</p>
+                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No Unassigned Critical Tickets</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">All high priority issues are currently assigned to IT Assistants.</p>
                         </div>
                       )}
                     </div>
@@ -646,53 +641,53 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                <div className="space-y-8">
                   
                   {/* Quick System Links */}
-                  <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                    <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-4">Quick Shortcuts</h2>
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm">
+                    <h2 className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">Quick Shortcuts</h2>
                     {userRole === 'management' ? (
                       <div className="grid grid-cols-2 gap-3">
-                        <Link to="/reports" className="p-3 text-center bg-slate-50 hover:bg-blue-50 border border-slate-100 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
+                        <Link to="/reports" className="p-3 text-center bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 border border-slate-100 dark:border-slate-800 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
                           <Ticket className="w-5 h-5 text-blue-500 group-hover:scale-105 transition-transform" />
-                          <span className="text-[10px] font-bold text-slate-700">Ticket Analytics</span>
+                          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Ticket Analytics</span>
                         </Link>
-                        <Link to="/reports" className="p-3 text-center bg-slate-50 hover:bg-amber-50 border border-slate-100 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
+                        <Link to="/reports" className="p-3 text-center bg-slate-50 dark:bg-slate-900 hover:bg-amber-50 border border-slate-100 dark:border-slate-800 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
                           <Wrench className="w-5 h-5 text-amber-500 group-hover:scale-105 transition-transform" />
-                          <span className="text-[10px] font-bold text-slate-700">Repair Audits</span>
+                          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Repair Audits</span>
                         </Link>
-                        <Link to="/reports" className="p-3 text-center bg-slate-50 hover:bg-purple-50 border border-slate-100 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
+                        <Link to="/reports" className="p-3 text-center bg-slate-50 dark:bg-slate-900 hover:bg-purple-50 border border-slate-100 dark:border-slate-800 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
                           <Server className="w-5 h-5 text-purple-500 group-hover:scale-105 transition-transform" />
-                          <span className="text-[10px] font-bold text-slate-700">Licensing Reports</span>
+                          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Licensing Reports</span>
                         </Link>
-                        <Link to="/reports" className="p-3 text-center bg-slate-50 hover:bg-emerald-50 border border-slate-100 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
+                        <Link to="/reports" className="p-3 text-center bg-slate-50 dark:bg-slate-900 hover:bg-emerald-50 border border-slate-100 dark:border-slate-800 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
                           <Globe className="w-5 h-5 text-emerald-500 group-hover:scale-105 transition-transform" />
-                          <span className="text-[10px] font-bold text-slate-700">ISP Outage Logs</span>
+                          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">ISP Outage Logs</span>
                         </Link>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-3">
-                        <Link to="/tickets" className="p-3 text-center bg-slate-50 hover:bg-blue-50 border border-slate-100 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
+                        <Link to="/tickets" className="p-3 text-center bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 border border-slate-100 dark:border-slate-800 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
                           <Ticket className="w-5 h-5 text-blue-500 group-hover:scale-105 transition-transform" />
-                          <span className="text-xs font-bold text-slate-700">Add Ticket</span>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Add Ticket</span>
                         </Link>
-                        <Link to="/repairs" className="p-3 text-center bg-slate-50 hover:bg-amber-50 border border-slate-100 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
+                        <Link to="/repairs" className="p-3 text-center bg-slate-50 dark:bg-slate-900 hover:bg-amber-50 border border-slate-100 dark:border-slate-800 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
                           <Wrench className="w-5 h-5 text-amber-500 group-hover:scale-105 transition-transform" />
-                          <span className="text-xs font-bold text-slate-700">Log Repair</span>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Log Repair</span>
                         </Link>
-                        <Link to="/software" className="p-3 text-center bg-slate-50 hover:bg-purple-50 border border-slate-100 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
+                        <Link to="/software" className="p-3 text-center bg-slate-50 dark:bg-slate-900 hover:bg-purple-50 border border-slate-100 dark:border-slate-800 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
                           <Server className="w-5 h-5 text-purple-500 group-hover:scale-105 transition-transform" />
-                          <span className="text-xs font-bold text-slate-700">Track Domain</span>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Track Domain</span>
                         </Link>
-                        <Link to="/reports" className="p-3 text-center bg-slate-50 hover:bg-emerald-50 border border-slate-100 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
+                        <Link to="/reports" className="p-3 text-center bg-slate-50 dark:bg-slate-900 hover:bg-emerald-50 border border-slate-100 dark:border-slate-800 rounded-lg transition-colors flex flex-col items-center gap-1.5 group">
                           <Activity className="w-5 h-5 text-emerald-500 group-hover:scale-105 transition-transform" />
-                          <span className="text-xs font-bold text-slate-700">Full Audit</span>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Full Audit</span>
                         </Link>
                       </div>
                     )}
                   </div>
 
                   {/* Software & Domain Expirations Alert */}
-                  <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-                      <h2 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Tracker Expirations (&le; 30 Days)</h2>
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
+                      <h2 className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tracker Expirations (&le; 30 Days)</h2>
                       <span className="text-[10px] font-extrabold text-purple-600 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full">
                         {expiringTrackers.length} Items
                       </span>
@@ -705,14 +700,14 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                             return (
                               <div key={lic.id} className="flex items-center justify-between p-2.5 bg-amber-50/50 border border-amber-100 rounded-lg text-xs">
                                 <div className="min-w-0 flex-1 pr-2">
-                                  <p className="font-bold text-slate-800 truncate">{lic.name}</p>
-                                  <p className="text-[10px] text-slate-400 uppercase font-extrabold mt-0.5 tracking-wider">{lic.type}</p>
+                                  <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{lic.name}</p>
+                                  <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-extrabold mt-0.5 tracking-wider">{lic.type}</p>
                                 </div>
                                 <div className="text-right shrink-0">
                                   <span className="font-bold text-amber-700 font-mono">
                                     {days < 0 ? "Expired" : `${days} days left`}
                                   </span>
-                                  <p className="text-[9px] text-slate-400 mt-0.5">
+                                  <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
                                     {lic.expiryDate ? format(new Date(lic.expiryDate), 'MMM dd') : ""}
                                   </p>
                                 </div>
@@ -721,38 +716,34 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                           })}
                         </div>
                       ) : (
-                        <div className="text-center py-6 text-slate-400">
+                        <div className="text-center py-6 text-slate-400 dark:text-slate-500">
                           <CheckCircle2 className="w-8 h-8 mx-auto mb-1 text-emerald-500 opacity-60" />
-                          <p className="text-xs font-semibold text-slate-600">All Trackers Clear</p>
-                          <p className="text-[10px] text-slate-400">No domains or Microsoft licenses expiring within 30 days.</p>
+                          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">All Trackers Clear</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500">No domains or Microsoft licenses expiring within 30 days.</p>
                         </div>
                       )}
                     </div>
                   </div>
 
                   {/* Recent Support Activity Feed */}
-                  <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50">
-                      <h2 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Recent Support Activity Feed</h2>
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+                      <h2 className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Recent Support Activity Feed</h2>
                     </div>
-                    <div className="p-4 divide-y divide-slate-100">
+                    <div className="p-4 divide-y divide-slate-100 dark:divide-slate-800">
                       {recentTickets.length > 0 ? (
                         recentTickets.map(ticket => (
                           <div key={ticket.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase shrink-0 ${
-                              ticket.priority === 'critical' 
-                                ? 'bg-red-50 text-red-600 border border-red-100' 
-                                : 'bg-slate-50 text-slate-600 border border-slate-200'
-                            }`}>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase shrink-0 ${ ticket.priority === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-slate-50 text-slate-600 dark:text-slate-400 border border-slate-200' }`}>
                               {ticket.priority?.[0] || 'T'}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate">{ticket.title}</p>
-                              <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate">
+                              <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{ticket.title}</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium truncate">
                                 {ticket.requestDept || 'General'} • {ticket.status?.replace('_', ' ').toUpperCase()}
                               </p>
                             </div>
-                            <span className="text-[9px] text-slate-400 font-mono whitespace-nowrap pt-0.5">
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono whitespace-nowrap pt-0.5">
                               {ticket.createdAt?.toDate 
                                 ? format(ticket.createdAt.toDate(), 'MM/dd HH:mm') 
                                 : ticket.createdAt?.seconds 
@@ -762,7 +753,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                           </div>
                         ))
                       ) : (
-                        <div className="text-center py-6 text-slate-400 text-xs">
+                        <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
                           No recent support activity recorded
                         </div>
                       )}

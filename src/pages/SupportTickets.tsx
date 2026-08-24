@@ -472,13 +472,13 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
 
   return (
     <>
-      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+      <header className="min-h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2.5 flex-wrap">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2.5 flex-wrap">
             <span>Support Tickets</span>
             <SyncStatusBadge onSynced={fetchTickets} />
           </h1>
-          <p className="text-xs text-slate-500">Manage IT support requests with local-first offline fallback</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Manage IT support requests with local-first offline fallback</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -491,19 +491,19 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
       <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex items-center relative max-w-md flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3" />
             <input
               type="text"
               placeholder="Search tickets or history..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition-shadow"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition-shadow"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
+                className="absolute right-2.5 p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 rounded cursor-pointer"
                 title="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
@@ -514,7 +514,7 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
             <button
               type="button"
               onClick={clearAllFiltersAndInputs}
-              className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
             >
               Clear Filter
             </button>
@@ -522,13 +522,13 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? <div className="text-slate-500 col-span-full">Loading...</div> : filteredTickets.map(ticket => {
+          {loading ? <div className="text-slate-500 dark:text-slate-400 col-span-full">Loading...</div> : filteredTickets.map(ticket => {
             const isAdminTicket = isAdminAddedData(ticket);
             const isItAssistant = userRole === 'it_assistant';
             const disableFields = isItAssistant && isAdminTicket;
 
             return (
-              <div key={ticket.id} className="relative overflow-hidden rounded-xl bg-slate-900 border border-slate-200 shadow-sm">
+              <div key={ticket.id} className="relative overflow-hidden rounded-xl bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
                 {/* Background Swipe Actions Revealed on Drag */}
                 <div className="absolute inset-0 flex justify-between items-center px-3 bg-slate-900 z-0">
                   {/* Left Actions (Swiped Right) */}
@@ -595,10 +595,10 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                       }
                     }
                   }}
-                  className="bg-white p-5 flex flex-col h-full relative z-10 touch-pan-y"
+                  className="bg-white dark:bg-slate-800 p-5 flex flex-col h-full relative z-10 touch-pan-y"
                 >
                   {/* Mobile Swipe Action Hint Bar */}
-                  <div className="md:hidden flex items-center justify-between text-[10px] text-slate-400 mb-2 pb-1.5 border-b border-slate-100">
+                  <div className="md:hidden flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
                     <span className="flex items-center gap-1 font-medium">
                       <ArrowLeftRight className="w-3 h-3 text-blue-500 animate-pulse" />
                       Swipe left to update/delete, right to resolve
@@ -611,7 +611,7 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                       <div className="flex items-center gap-2">
                         <div className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 w-fit">{ticket.ticketCode || 'NO CODE'}</div>
                         {ticket.createdAt && (
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
                             {(() => {
                               try {
                                 if (ticket.createdAt.toDate) {
@@ -634,41 +634,36 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                         </button>
                       )}
                     </div>
-                    <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{ticket.title}</h3>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{ticket.title}</h3>
                   </div>
-                  <span className={`shrink-0 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-full ${
-                    ticket.status === 'resolved' ? 'bg-green-100 text-green-700' :
-                    ticket.status === 'closed' ? 'bg-slate-200 text-slate-600' :
-                    ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                    'bg-amber-100 text-amber-700'
-                  }`}>
+                  <span className={`shrink-0 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-full ${ ticket.status === 'resolved' ? 'bg-green-100 text-green-700' : ticket.status === 'closed' ? 'bg-slate-200 text-slate-600' : ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700' }`}>
                     {ticket.status}
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 mb-4 flex-1 line-clamp-3">{ticket.description}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-4 flex-1 line-clamp-3">{ticket.description}</p>
                 
                 <div className="flex flex-col gap-1 mb-4 text-[11px]">
                     {ticket.requestUsername && (
-                      <div className="flex items-center text-slate-500">
+                      <div className="flex items-center text-slate-500 dark:text-slate-400">
                         <span className="font-bold mr-1">User:</span> {ticket.requestUsername}
                       </div>
                     )}
                     {ticket.requestDept && (
-                      <div className="flex items-center text-slate-500">
-                        <span className="font-bold mr-1">Dept:</span> <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">{ticket.requestDept}</span>
+                      <div className="flex items-center text-slate-500 dark:text-slate-400">
+                        <span className="font-bold mr-1">Dept:</span> <span className="bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{ticket.requestDept}</span>
                       </div>
                     )}
                 </div>
 
-                <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                      <div className="col-span-2">
-                       <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Support Type</label>
+                       <label className="block text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Support Type</label>
                        <select
                          value={ticket.supportType || 'hardware'}
                          onChange={(e) => updateField(ticket.id, 'supportType', e.target.value)}
                          disabled={disableFields}
-                         className="w-full bg-slate-50 border border-slate-200 rounded outline-none px-2 py-1 text-slate-800 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded outline-none px-2 py-1 text-slate-800 dark:text-slate-200 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                        >
                          <option value="hardware">Hardware</option>
                          <option value="software">Software</option>
@@ -678,12 +673,12 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                        </select>
                      </div>
                      <div>
-                       <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Priority</label>
+                       <label className="block text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Priority</label>
                        <select
                          value={ticket.priority || 'low'}
                          onChange={(e) => updateField(ticket.id, 'priority', e.target.value)}
                          disabled={disableFields}
-                         className="w-full bg-slate-50 border border-slate-200 rounded outline-none px-2 py-1 text-slate-800 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded outline-none px-2 py-1 text-slate-800 dark:text-slate-200 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                        >
                          <option value="low">Low</option>
                          <option value="medium">Medium</option>
@@ -692,12 +687,12 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                        </select>
                      </div>
                      <div>
-                       <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Assignee</label>
+                       <label className="block text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Assignee</label>
                        <select
                          value={ticket.assigneeId || 'unassigned'}
                          onChange={(e) => updateField(ticket.id, 'assigneeId', e.target.value)}
                          disabled={isItAssistant || disableFields}
-                         className="w-full bg-slate-50 border border-slate-200 rounded outline-none px-2 py-1 text-slate-800 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded outline-none px-2 py-1 text-slate-800 dark:text-slate-200 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                        >
                          <option value="unassigned">Unassigned</option>
                          {assistants.map(a => (
@@ -707,8 +702,8 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                      </div>
                   </div>
 
-                  <div className="text-[11px] text-slate-500 line-clamp-2 mt-2">
-                    <span className="font-bold text-slate-700">Latest update:</span> {ticket.history?.[ticket.history.length - 1]?.note || "None"}
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">Latest update:</span> {ticket.history?.[ticket.history.length - 1]?.note || "None"}
                   </div>
                   
                   <div className="flex space-x-2">
@@ -716,7 +711,7 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                       value={ticket.status}
                       onChange={(e) => updateField(ticket.id, 'status', e.target.value)}
                       disabled={disableFields}
-                      className="bg-slate-50 border border-slate-200 text-xs rounded outline-none px-2 py-1.5 flex-1 text-slate-800 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs rounded outline-none px-2 py-1.5 flex-1 text-slate-800 dark:text-slate-200 focus:border-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <option value="open">Open</option>
                       <option value="in_progress">In Progress</option>
@@ -736,8 +731,8 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                 {/* History Modal for this ticket */}
                 {showHistoryModal === ticket.id && (
                   <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50 backdrop-blur-[2px]">
-                    <div className="bg-white rounded-xl p-6 w-full max-w-lg border border-slate-200 shadow-xl">
-                      <h2 className="text-lg font-bold text-slate-900 mb-4">Ticket History - {ticket.title}</h2>
+                    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-slate-700 shadow-xl">
+                      <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Ticket History - {ticket.title}</h2>
                       <div className="max-h-60 overflow-y-auto mb-4 space-y-2 pr-2">
                         {ticket.history?.map((h: any, i: number) => {
                           const isAiDraft = h.note?.includes('[AI Preliminary Response Draft]') || h.note?.includes('[AI Draft Response]');
@@ -749,18 +744,18 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                                   <span>AI Generated Preliminary Response</span>
                                 </div>
                               )}
-                              <div className="text-slate-800 whitespace-pre-wrap leading-relaxed">{h.note}</div>
-                              <div className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-wider">{format(new Date(h.date), 'Pp')}</div>
+                              <div className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">{h.note}</div>
+                              <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-wider">{format(new Date(h.date), 'Pp')}</div>
                             </div>
                           );
                         })}
                         {(!ticket.history || ticket.history.length === 0) && (
-                          <div className="text-sm text-slate-500">No updates yet.</div>
+                          <div className="text-sm text-slate-500 dark:text-slate-400">No updates yet.</div>
                         )}
                       </div>
                       <form onSubmit={(e) => handleAddHistory(e, ticket.id, ticket.history || [])}>
                         <div className="flex items-center justify-between mb-2">
-                          <label className="text-xs font-bold text-slate-700">Add New Update / Note</label>
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Add New Update / Note</label>
                           <button
                             type="button"
                             disabled={isGeneratingDraft}
@@ -782,13 +777,13 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                         </div>
                         <textarea required
                           placeholder="Add new update/note or click 'Generate AI Draft'..."
-                          className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 mb-4 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 mb-4 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           rows={4}
                           value={historyNote}
                           onChange={e => setHistoryNote(e.target.value)}
                         ></textarea>
                         <div className="flex justify-end space-x-2">
-                          <button type="button" onClick={() => setShowHistoryModal(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">Close</button>
+                          <button type="button" onClick={() => setShowHistoryModal(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors">Close</button>
                           <button type="submit" className="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold shadow-sm hover:bg-blue-700 transition-colors">Add Note</button>
                         </div>
                       </form>
@@ -799,36 +794,36 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
               </div>
             );
           })}
-          {filteredTickets.length === 0 && !loading && <div className="text-slate-500 col-span-full">No support tickets found.</div>}
+          {filteredTickets.length === 0 && !loading && <div className="text-slate-500 dark:text-slate-400 col-span-full">No support tickets found.</div>}
         </div>
 
         {showModal && (
           <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50 backdrop-blur-[2px]">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md border border-slate-200 shadow-xl">
-              <h2 className="text-lg font-bold text-slate-900 mb-5">New Support Ticket</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md border border-slate-200 dark:border-slate-700 shadow-xl">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-5">New Support Ticket</h2>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Issue / Title</label>
-                  <input required type="text" value={newTicket.title} onChange={e => setNewTicket({...newTicket, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Issue / Title</label>
+                  <input required type="text" value={newTicket.title} onChange={e => setNewTicket({...newTicket, title: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
-                  <textarea required value={newTicket.description} onChange={e => setNewTicket({...newTicket, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" rows={3}></textarea>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Description</label>
+                  <textarea required value={newTicket.description} onChange={e => setNewTicket({...newTicket, description: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" rows={3}></textarea>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Request Username (Optional)</label>
-                    <input type="text" value={newTicket.requestUsername} onChange={e => setNewTicket({...newTicket, requestUsername: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="e.g. jdoe" />
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Request Username (Optional)</label>
+                    <input type="text" value={newTicket.requestUsername} onChange={e => setNewTicket({...newTicket, requestUsername: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="e.g. jdoe" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Department (Optional)</label>
-                    <input type="text" value={newTicket.requestDept} onChange={e => setNewTicket({...newTicket, requestDept: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="e.g. Sales, HR" />
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Department (Optional)</label>
+                    <input type="text" value={newTicket.requestDept} onChange={e => setNewTicket({...newTicket, requestDept: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="e.g. Sales, HR" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Support Type</label>
-                    <select value={newTicket.supportType} onChange={e => setNewTicket({...newTicket, supportType: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Support Type</label>
+                    <select value={newTicket.supportType} onChange={e => setNewTicket({...newTicket, supportType: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                       <option value="hardware">Hardware</option>
                       <option value="software">Software</option>
                       <option value="network">Network</option>
@@ -839,8 +834,8 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Priority</label>
-                    <select value={newTicket.priority} onChange={e => setNewTicket({...newTicket, priority: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Priority</label>
+                    <select value={newTicket.priority} onChange={e => setNewTicket({...newTicket, priority: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
@@ -848,8 +843,8 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Assign To</label>
-                    <select value={newTicket.assigneeId} onChange={e => setNewTicket({...newTicket, assigneeId: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Assign To</label>
+                    <select value={newTicket.assigneeId} onChange={e => setNewTicket({...newTicket, assigneeId: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                       <option value="unassigned">Unassigned</option>
                       {assistants.map(a => (
                         <option key={a.id} value={a.id}>{a.displayName || a.username || a.email}</option>
@@ -857,16 +852,16 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
                     </select>
                   </div>
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={resetNewTicketForm}
-                    className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
                   >
                     Clear Form
                   </button>
                   <div className="flex space-x-2">
-                    <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">Cancel</button>
+                    <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors cursor-pointer">Cancel</button>
                     <button 
                       type="submit" 
                       disabled={isSubmittingTicket} 

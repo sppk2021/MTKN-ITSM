@@ -428,7 +428,7 @@ export function UserProfileModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 12 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden z-10 my-8"
+          className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl overflow-hidden z-10 my-8"
         >
           {/* Modal Header */}
           <div className="bg-slate-900 text-white p-6 sm:px-8 border-b border-slate-800 flex items-center justify-between">
@@ -440,14 +440,14 @@ export function UserProfileModal({
                 <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
                   <span>User Profile & Settings</span>
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-400 dark:text-slate-500">
                   Manage personal details, avatar photo, and account security
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+              className="text-slate-400 dark:text-slate-500 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
               title="Close dialog"
             >
               <X className="w-5 h-5" />
@@ -455,7 +455,7 @@ export function UserProfileModal({
           </div>
 
           {/* User Hero Banner */}
-          <div className="bg-gradient-to-r from-slate-50 to-slate-100/80 px-6 sm:px-8 py-5 border-b border-slate-200 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+          <div className="bg-gradient-to-r from-slate-50 to-slate-100/80 px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center sm:items-start gap-4">
             {/* Avatar with Camera Overlay */}
             <div className="relative group shrink-0">
               <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-slate-800 flex items-center justify-center text-white text-2xl font-bold">
@@ -484,7 +484,7 @@ export function UserProfileModal({
 
             <div className="text-center sm:text-left flex-1 min-w-0">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
-                <h3 className="text-lg font-bold text-slate-900 truncate">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
                   {fullName || currentUser?.displayName || "System User"}
                 </h3>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 uppercase tracking-wider">
@@ -495,44 +495,32 @@ export function UserProfileModal({
                   Active Account
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-mono flex items-center justify-center sm:justify-start gap-1.5 truncate">
-                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono flex items-center justify-center sm:justify-start gap-1.5 truncate">
+                <Mail className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                 <span>{currentUser?.email || "user@mtknitsm.local"}</span>
               </p>
             </div>
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200 px-6 sm:px-8 bg-slate-50/50">
+          <div className="flex border-b border-slate-200 dark:border-slate-700 px-6 sm:px-8 bg-slate-50/50 dark:bg-slate-900/50">
             <button
               onClick={() => setActiveTab('profile')}
-              className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
-                activeTab === 'profile'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
+              className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${ activeTab === 'profile' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900' }`}
             >
               <UserIcon className="w-4 h-4" />
               <span>Personal Details & Photo</span>
             </button>
             <button
               onClick={() => setActiveTab('password')}
-              className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
-                activeTab === 'password'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
+              className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${ activeTab === 'password' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900' }`}
             >
               <Lock className="w-4 h-4" />
               <span>Password & Security</span>
             </button>
             <button
               onClick={() => setActiveTab('permissions')}
-              className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
-                activeTab === 'permissions'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
+              className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${ activeTab === 'permissions' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900' }`}
             >
               <ShieldCheck className="w-4 h-4" />
               <span>Role Permissions</span>
@@ -542,7 +530,7 @@ export function UserProfileModal({
           {/* Modal Body */}
           <div className="p-6 sm:p-8 max-h-[60vh] overflow-y-auto">
             {initialLoading ? (
-              <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-3">
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-3">
                 <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
                 <p className="text-xs font-medium">Loading profile information...</p>
               </div>
@@ -563,8 +551,8 @@ export function UserProfileModal({
                 )}
 
                 {/* Avatar Uploader Section */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                     Profile Picture / Avatar
                   </label>
                   
@@ -581,9 +569,9 @@ export function UserProfileModal({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition-colors shadow-sm cursor-pointer"
+                      className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-400 transition-colors shadow-sm cursor-pointer"
                     >
-                      <Upload className="w-3.5 h-3.5 text-slate-500" />
+                      <Upload className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                       <span>Upload New Photo</span>
                     </button>
 
@@ -598,7 +586,7 @@ export function UserProfileModal({
                       </button>
                     )}
 
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500">
                       JPG, PNG, WebP or GIF up to 8MB. Auto-optimized for fast offline loading.
                     </span>
                   </div>
@@ -608,18 +596,18 @@ export function UserProfileModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Full Name */}
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                       Full Name <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative">
-                      <UserIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <UserIcon className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder="e.g. Saw Pyae Phyo Kyaw"
                         required
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400"
                       />
                     </div>
                   </div>
@@ -627,7 +615,7 @@ export function UserProfileModal({
                   {/* Email Address */}
                   <div className="sm:col-span-2">
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-bold text-slate-700">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                         Email Address <span className="text-rose-500">*</span>
                       </label>
                       <span className="text-[11px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
@@ -635,62 +623,62 @@ export function UserProfileModal({
                       </span>
                     </div>
                     <div className="relative">
-                      <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="e.g. user@mtknitsm.com"
                         required
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 font-mono"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 font-mono"
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1">
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
                       Used for logging in, receiving system outage alerts, and account communications.
                     </p>
                   </div>
 
                   {/* Department */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                       Department / Office
                     </label>
                     <div className="relative">
-                      <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <Building2 className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
                         placeholder="e.g. Information Technology"
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400"
                       />
                     </div>
                   </div>
 
                   {/* Contact Phone */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                       Phone Number
                     </label>
                     <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <Phone className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="e.g. +95 912345678"
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Save Profile Button */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors"
+                    className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     Cancel
                   </button>
@@ -729,12 +717,12 @@ export function UserProfileModal({
                   </div>
                 )}
 
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
-                  <p className="font-semibold text-slate-800 flex items-center gap-1.5">
+                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                  <p className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <Shield className="w-4 h-4 text-blue-600" />
                     Password Security Requirements
                   </p>
-                  <p className="text-slate-500">
+                  <p className="text-slate-500 dark:text-slate-400">
                     Your password protects your access to tickets, repairs, and system logs. Use at least 6 characters with a combination of letters and numbers.
                   </p>
                 </div>
@@ -753,12 +741,12 @@ export function UserProfileModal({
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         placeholder="Enter your existing password"
                         required={requiresReauth}
-                        className="w-full bg-white border border-amber-300 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-800"
+                        className="w-full bg-white dark:bg-slate-800 border border-amber-300 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-800 dark:text-slate-200"
                       />
                       <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 p-1"
                       >
                         {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -768,23 +756,23 @@ export function UserProfileModal({
 
                 {/* New Password */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     New Password <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type={showNewPassword ? "text" : "password"}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Minimum 6 characters"
                       required
-                      className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 dark:text-slate-200"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 p-1"
                     >
                       {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -794,10 +782,10 @@ export function UserProfileModal({
                   {newPassword && (
                     <div className="mt-2.5 space-y-1.5">
                       <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-slate-500">Password Strength:</span>
-                        <span className="font-semibold text-slate-700">{passwordStrength.label}</span>
+                        <span className="text-slate-500 dark:text-slate-400">Password Strength:</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">{passwordStrength.label}</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex gap-1">
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800/50 rounded-full overflow-hidden flex gap-1">
                         <div className={`h-full flex-1 rounded-full transition-all ${passwordStrength.score >= 1 ? passwordStrength.color : 'bg-slate-200'}`} />
                         <div className={`h-full flex-1 rounded-full transition-all ${passwordStrength.score >= 2 ? passwordStrength.color : 'bg-slate-200'}`} />
                         <div className={`h-full flex-1 rounded-full transition-all ${passwordStrength.score >= 3 ? passwordStrength.color : 'bg-slate-200'}`} />
@@ -808,23 +796,23 @@ export function UserProfileModal({
 
                 {/* Confirm New Password */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Confirm New Password <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Re-enter new password"
                       required
-                      className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 dark:text-slate-200"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 p-1"
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -842,11 +830,11 @@ export function UserProfileModal({
                 </div>
 
                 {/* Save Password Button */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors"
+                    className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     Cancel
                   </button>
@@ -872,10 +860,10 @@ export function UserProfileModal({
             ) : (
               /* Permissions Summary Tab */
               <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
                   <div>
-                    <span className="text-xs text-slate-500 font-medium">Assigned Role</span>
-                    <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Assigned Role</span>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                       {userRole.replace('_', ' ')}
                     </h4>
                   </div>
@@ -885,10 +873,10 @@ export function UserProfileModal({
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     Tab & Feature Permissions
                   </h4>
-                  <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden bg-white">
+                  <div className="border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden bg-white dark:bg-slate-800">
                     {Object.entries(TAB_LABELS).map(([tabKey, label]) => {
                       const tabPerm = userPermissions?.[tabKey as keyof UserPermissions];
                       const canView = userRole === 'admin' || (tabPerm?.view ?? false);
@@ -896,25 +884,19 @@ export function UserProfileModal({
                       const canDelete = userRole === 'admin' || (tabPerm?.delete ?? false);
 
                       return (
-                        <div key={tabKey} className="p-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <div key={tabKey} className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                           <div>
-                            <p className="text-xs font-semibold text-slate-900">{label}</p>
-                            <p className="text-[10px] text-slate-400 font-mono">Module: /{tabKey}</p>
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white">{label}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Module: /{tabKey}</p>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              canView ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-400'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${ canView ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-400' }`}>
                               View
                             </span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              canEdit ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-400'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${ canEdit ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-400' }`}>
                               Edit
                             </span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              canDelete ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-100 text-slate-400'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${ canDelete ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-100 text-slate-400' }`}>
                               Delete
                             </span>
                           </div>
@@ -924,7 +906,7 @@ export function UserProfileModal({
                   </div>
                 </div>
 
-                <p className="text-[11px] text-slate-400 text-center italic">
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center italic">
                   To request permission adjustments, contact an IT Administrator.
                 </p>
               </div>

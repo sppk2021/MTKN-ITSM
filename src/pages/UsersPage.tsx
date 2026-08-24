@@ -398,13 +398,13 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
 
   return (
     <>
-      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+      <header className="min-h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-600" />
             User Management & Permissions
           </h1>
-          <p className="text-xs text-slate-500">Manage user accounts, roles, security credentials, and granular tab view/edit/delete permissions</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Manage user accounts, roles, security credentials, and granular tab view/edit/delete permissions</p>
         </div>
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
           {canDeleteUsers && (
@@ -439,50 +439,50 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
         </div>
       </header>
       
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto bg-slate-50/50">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/50">
         {/* Search and Filters Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search user accounts by username, email, or role..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium shrink-0">
-            <span>Total Accounts: <strong className="text-slate-800 font-bold">{users.length}</strong></span>
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0">
+            <span>Total Accounts: <strong className="text-slate-800 dark:text-slate-200 font-bold">{users.length}</strong></span>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100 text-left">
-              <thead className="bg-slate-50">
+            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
+              <thead className="bg-slate-50 dark:bg-slate-900">
                 <tr>
-                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Username / Email</th>
-                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Password</th>
-                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Role</th>
-                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tab Permissions</th>
-                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-5 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Username / Email</th>
+                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Password</th>
+                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
+                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tab Permissions</th>
+                  <th className="px-5 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-5 py-3 text-right text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-slate-400">Loading user accounts...</td>
+                    <td colSpan={6} className="px-5 py-8 text-center text-slate-400 dark:text-slate-500">Loading user accounts...</td>
                   </tr>
                 ) : filteredUsers.map((user) => {
                   const permSummary = formatPermissionsSummary(user.permissions);
                   return (
-                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-5 py-3.5 whitespace-nowrap font-medium text-slate-800">
+                    <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      <td className="px-5 py-3.5 whitespace-nowrap font-medium text-slate-800 dark:text-slate-200">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">
+                          <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
                             {user.photoURL ? (
                               <img src={user.photoURL} alt={user.displayName || user.username} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             ) : (
@@ -490,19 +490,19 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                             )}
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                            <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                               <span>{user.displayName || user.fullName || user.username || user.email?.split('@')[0]}</span>
                               {user.id === auth.currentUser?.uid && (
                                 <span className="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-bold uppercase">You</span>
                               )}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-mono">{user.email}</div>
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{user.email}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 whitespace-nowrap text-slate-700 font-mono text-xs">
+                      <td className="px-5 py-3.5 whitespace-nowrap text-slate-700 dark:text-slate-300 font-mono text-xs">
                         <div className="flex items-center gap-1.5">
-                          <span className="bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-800 tracking-wider font-semibold">
+                          <span className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded text-slate-800 dark:text-slate-200 tracking-wider font-semibold">
                             {visiblePasswords[user.id]
                               ? getUserPassword(user)
                               : "••••••••"}
@@ -510,7 +510,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                           <button
                             type="button"
                             onClick={() => togglePasswordVisibility(user.id)}
-                            className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
                             title={visiblePasswords[user.id] ? "Hide password" : "Show password"}
                           >
                             {visiblePasswords[user.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -518,19 +518,19 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                           <button
                             type="button"
                             onClick={() => copyPassword(user.id, getUserPassword(user))}
-                            className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
                             title="Copy password"
                           >
                             {copiedId === user.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 whitespace-nowrap text-slate-500">
+                      <td className="px-5 py-3.5 whitespace-nowrap text-slate-500 dark:text-slate-400">
                         {canEditUsers ? (
                           <select
                             value={user.role || 'staff'}
                             onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                            className="bg-slate-50 border border-slate-200 rounded px-2.5 py-1 outline-none text-slate-800 font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow min-h-[36px]"
+                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1 outline-none text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow min-h-[36px]"
                           >
                             <option value="admin">Admin</option>
                             <option value="management">Management</option>
@@ -538,27 +538,21 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                             <option value="staff">Staff</option>
                           </select>
                         ) : (
-                          <span className="font-semibold text-slate-700 uppercase text-[11px]">{user.role}</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300 uppercase text-[11px]">{user.role}</span>
                         )}
                       </td>
 
                       {/* Granular Permissions Column */}
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                            permSummary.tone === 'full' 
-                              ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                              : permSummary.tone === 'none'
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${ permSummary.tone === 'full' ? 'bg-blue-50 text-blue-700 border-blue-200' : permSummary.tone === 'none' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200' }`}>
                             {permSummary.label}
                           </span>
                           {canEditUsers && (
                             <button
                               type="button"
                               onClick={() => handleOpenPermissionsModal(user)}
-                              className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
+                              className="p-1 text-slate-400 dark:text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                               title="Edit manual tab permissions (View, Edit, Delete)"
                             >
                               <Sliders className="w-3.5 h-3.5" />
@@ -576,7 +570,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                         {canEditUsers && (
                           <button
                             onClick={() => handleOpenPermissionsModal(user)}
-                            className="p-1.5 text-slate-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer min-h-[36px]"
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer min-h-[36px]"
                             title="Edit Permissions"
                           >
                             <Sliders className="w-3.5 h-3.5 text-blue-600" />
@@ -609,7 +603,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                 })}
                 {!loading && filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-slate-500">No user accounts found matching your query.</td>
+                    <td colSpan={6} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400">No user accounts found matching your query.</td>
                   </tr>
                 )}
               </tbody>
@@ -621,20 +615,20 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
       {/* Edit User Permissions Modal */}
       {selectedUserForPermissions && editingPermissions && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-xl p-6 w-full max-w-xl border border-slate-200 shadow-2xl my-8">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-xl border border-slate-200 dark:border-slate-700 shadow-2xl my-8">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Sliders className="w-5 h-5 text-blue-600" />
                   <span>Manual Tab Permissions</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Configure custom View, Edit, and Delete access for <strong className="text-slate-800">{selectedUserForPermissions.username || selectedUserForPermissions.email}</strong> (Role: <span className="uppercase text-blue-600 font-semibold">{selectedUserForPermissions.role}</span>)
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Configure custom View, Edit, and Delete access for <strong className="text-slate-800 dark:text-slate-200">{selectedUserForPermissions.username || selectedUserForPermissions.email}</strong> (Role: <span className="uppercase text-blue-600 font-semibold">{selectedUserForPermissions.role}</span>)
                 </p>
               </div>
               <button 
                 onClick={() => { setSelectedUserForPermissions(null); setEditingPermissions(null); }} 
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -647,11 +641,11 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                 currentRole={selectedUserForPermissions.role}
               />
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => { setSelectedUserForPermissions(null); setEditingPermissions(null); }}
-                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors cursor-pointer min-h-[44px]"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors cursor-pointer min-h-[44px]"
                 >
                   Cancel
                 </button>
@@ -673,28 +667,28 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
       {/* Change Password Modal */}
       {selectedUserForPassword && (
         <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm border border-slate-200 shadow-xl">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-sm border border-slate-200 dark:border-slate-700 shadow-xl">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Key className="w-5 h-5 text-blue-600" />
                 <span>Change User Password</span>
               </h2>
-              <button onClick={() => setSelectedUserForPassword(null)} className="text-slate-400 hover:text-slate-600 p-1">
+              <button onClick={() => setSelectedUserForPassword(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-slate-500 mb-4">
-              Updating password for <strong className="text-slate-800">{selectedUserForPassword.username || selectedUserForPassword.email}</strong>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              Updating password for <strong className="text-slate-800 dark:text-slate-200">{selectedUserForPassword.username || selectedUserForPassword.email}</strong>
             </p>
             <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">New Password</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">New Password</label>
                 <input
                   required
                   type="password"
                   value={changePasswordValue}
                   onChange={e => setChangePasswordValue(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[44px]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[44px]"
                   placeholder="At least 6 characters"
                 />
               </div>
@@ -702,7 +696,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                 <button
                   type="button"
                   onClick={() => setSelectedUserForPassword(null)}
-                  className="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-colors min-h-[44px]"
+                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-colors min-h-[44px]"
                 >
                   Cancel
                 </button>
@@ -722,16 +716,16 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
       {/* Add User Modal with Tab Permissions Configuration */}
       {showAddModal && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl border border-slate-200 shadow-2xl my-8">
-            <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-2xl border border-slate-200 dark:border-slate-700 shadow-2xl my-8">
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <UserPlus className="w-5 h-5 text-blue-600" />
                   <span>Create User Account with Granular Permissions</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">Define account credentials and set custom manual tab permissions</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Define account credentials and set custom manual tab permissions</p>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+              <button onClick={() => setShowAddModal(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -740,29 +734,29 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
               {/* Account Credentials */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Username</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Username</label>
                   <input 
                     required 
                     type="text" 
                     value={newUser.username} 
                     onChange={e => setNewUser({...newUser, username: e.target.value})} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg text-slate-800 px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[42px]" 
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[42px]" 
                     placeholder="e.g. jsmith" 
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Initial Password</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Initial Password</label>
                   <input 
                     required 
                     type="password" 
                     value={newUser.password} 
                     onChange={e => setNewUser({...newUser, password: e.target.value})} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg text-slate-800 px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[42px]" 
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[42px]" 
                     placeholder="Minimum 6 chars" 
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Role Preset</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Role Preset</label>
                   <select 
                     value={newUser.role} 
                     onChange={e => {
@@ -773,7 +767,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                         permissions: JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS[newR] || DEFAULT_ROLE_PERMISSIONS.staff))
                       });
                     }} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg text-slate-800 px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[42px] font-medium"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[42px] font-medium"
                   >
                     <option value="staff">Staff</option>
                     <option value="it_assistant">IT Assistant</option>
@@ -784,13 +778,13 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
               </div>
 
               {/* Granular Permissions Section */}
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div className="mb-2">
-                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-blue-600" />
                     <span>Manual Tab Permissions (View, Edit, Delete)</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Customize exactly what this user can view, create/edit, and delete across every module.
                   </p>
                 </div>
@@ -803,7 +797,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setNewUser({ 
@@ -812,14 +806,14 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                     role: 'it_assistant',
                     permissions: JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS.it_assistant))
                   })}
-                  className="px-4 py-2.5 bg-slate-100 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
                 >
                   Clear Form
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors cursor-pointer min-h-[44px]"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors cursor-pointer min-h-[44px]"
                 >
                   Cancel
                 </button>
