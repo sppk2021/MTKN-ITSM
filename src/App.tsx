@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, BarChart3, CalendarDays, Wrench, LogOut, 
   Ticket, Globe, Server, Shield, Lock, User as UserIcon, LogIn, 
   ChevronLeft, ChevronRight, Download, Menu, X as CloseIcon, 
-  UserCheck, Settings2, Sparkles 
+  UserCheck, Settings2, Sparkles, Sun, Moon
 } from "lucide-react";
 import { auth, db } from "./lib/firebase";
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
@@ -30,7 +30,11 @@ interface SidebarProps {
   displayName?: string;
   photoURL?: string;
   userPermissions?: UserPermissions;
+  appLogo?: string | null;
+  onLogoUpdate?: (newLogo: string) => void;
   onOpenProfile: () => void;
+  isDarkMode: boolean;
+  toggleTheme: () => void;
 }
 
 interface NavItem {
@@ -40,10 +44,11 @@ interface NavItem {
   tabKey: TabKey;
 }
 
-function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, onOpenProfile }: SidebarProps) {
+function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appLogo, onLogoUpdate, onOpenProfile, isDarkMode, toggleTheme }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem("sidebar_collapsed") === "true");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -53,6 +58,12 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, onOp
   });
 
   useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -67,6 +78,8 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, onOp
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
@@ -118,23 +131,67 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, onOp
     .substring(0, 2)
     .toUpperCase();
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Image must be smaller than 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result && onLogoUpdate) {
+          onLogoUpdate(reader.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
   const sidebarContent = (
     <div className={cn("flex-1 flex flex-col min-h-0", isCollapsed && !isMobileOpen ? "p-3 py-5" : "p-6")}>
+      <input 
+        type="file" 
+        accept="image/*" 
+        ref={fileInputRef} 
+        onChange={handleLogoFileChange} 
+        className="hidden" 
+      />
       {/* Header / Brand */}
       <div className={cn("flex items-center mb-6 shrink-0", isCollapsed && !isMobileOpen ? "flex-col gap-3 justify-center" : "justify-between")}>
-        <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && !isMobileOpen && "justify-center")}>
+        <div className={cn("flex items-center gap-3 min-w-0 group relative", isCollapsed && !isMobileOpen && "justify-center")}>
           <button
             onClick={isCollapsed && !isMobileOpen ? toggleCollapse : undefined}
             className={cn(
-              "w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white shrink-0 shadow-md shadow-blue-500/20 transition-transform active:scale-95",
-              isCollapsed && !isMobileOpen && "cursor-pointer hover:bg-blue-500"
+              "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shrink-0 shadow-md transition-transform active:scale-95 overflow-hidden relative",
+              !appLogo && "bg-blue-600 shadow-blue-500/20",
+              isCollapsed && !isMobileOpen && !appLogo && "cursor-pointer hover:bg-blue-500"
             )}
             title={isCollapsed && !isMobileOpen ? "Click to expand sidebar" : "MTKN ITSM"}
           >
-            MT
+            {appLogo ? (
+              <img src={appLogo} alt="Logo" className="w-full h-full object-cover" />
+            ) : (
+              "MT"
+            )}
+            {role === 'admin' && (
+              <div 
+                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                title="Edit Logo"
+              >
+                <Settings2 className="w-4 h-4 text-white" />
+              </div>
+            )}
           </button>
           {(!isCollapsed || isMobileOpen) && (
-            <span className="text-white font-bold text-lg tracking-tight truncate">
+            <span className="text-white font-bold text-lg tracking-tight truncate flex-1">
               MTKN ITSM
             </span>
           )}
@@ -233,8 +290,32 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, onOp
         )}
       </nav>
 
+      {/* Theme Switcher */}
+      <div className="mt-auto pt-4 pb-2 shrink-0 border-b border-slate-800">
+        <div className="relative group">
+          <button
+            onClick={toggleTheme}
+            className={cn(
+              "flex items-center transition-all min-h-[42px] cursor-pointer text-slate-400 hover:bg-slate-800/80 hover:text-white",
+              isCollapsed && !isMobileOpen
+                ? "w-11 h-11 mx-auto justify-center rounded-xl"
+                : "w-full gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium"
+            )}
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDarkMode ? <Sun className="w-5 h-5 flex-shrink-0" /> : <Moon className="w-5 h-5 flex-shrink-0" />}
+            {(!isCollapsed || isMobileOpen) && <span className="truncate">{isDarkMode ? "Light Mode" : "Dark Mode"}</span>}
+          </button>
+          {isCollapsed && !isMobileOpen && (
+            <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-950 text-white text-xs font-semibold rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* User Profile Section in Sidebar */}
-      <div className="mt-auto pt-3 shrink-0">
+      <div className="pt-3 shrink-0">
         {isCollapsed && !isMobileOpen ? (
           /* Collapsed User Controls */
           <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-800">
@@ -251,11 +332,15 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, onOp
                     {userInitials}
                   </div>
                 )}
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-900" />
+                <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-900", isOnline ? "bg-emerald-500" : "bg-rose-500")} title={isOnline ? "Online" : "Offline"} />
               </button>
 
               <div className="pointer-events-none absolute left-full bottom-0 ml-3 px-3 py-2 bg-slate-950 text-white text-xs rounded-xl shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                <p className="font-bold text-white">{displayName || userEmail || "My Profile"}</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className="font-bold text-white">{displayName || userEmail || "My Profile"}</p>
+                  <span className={cn("w-1.5 h-1.5 rounded-full", isOnline ? "bg-emerald-500" : "bg-rose-500")}></span>
+                  <span className={cn("text-[10px] font-medium", isOnline ? "text-emerald-400" : "text-rose-400")}>{isOnline ? "Online" : "Offline"}</span>
+                </div>
                 <p className="text-[11px] text-blue-400 capitalize">{role.replace('_', ' ')} • Click to edit profile</p>
               </div>
             </div>
@@ -297,13 +382,19 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, onOp
                     </div>
                   )}
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-800" />
+                <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-800", isOnline ? "bg-emerald-500" : "bg-rose-500")} />
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
-                  {displayName || userEmail?.split('@')[0] || "My Profile"}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+                    {displayName || userEmail?.split('@')[0] || "My Profile"}
+                  </p>
+                  <div className="flex items-center gap-1 shrink-0 ml-1">
+                    <span className={cn("w-1.5 h-1.5 rounded-full", isOnline ? "bg-emerald-500" : "bg-rose-500")}></span>
+                    <span className={cn("text-[9px] font-medium tracking-wide", isOnline ? "text-emerald-400" : "text-rose-400")}>{isOnline ? "ONLINE" : "OFFLINE"}</span>
+                  </div>
+                </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider bg-blue-950/80 px-1.5 py-0.2 rounded border border-blue-800/60">
                     {role.replace('_', ' ')}
@@ -409,12 +500,69 @@ export default function App() {
   const [userDisplayName, setUserDisplayName] = useState<string>("");
   const [userPhotoURL, setUserPhotoURL] = useState<string>("");
   const [userPermissions, setUserPermissions] = useState<UserPermissions | undefined>(undefined);
+  const [appLogo, setAppLogo] = useState<string | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(prev => !prev);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const docRef = doc(db, "settings", "app_config");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().logoBase64) {
+          const logoData = docSnap.data().logoBase64;
+          setAppLogo(logoData);
+          let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+          }
+          link.href = logoData;
+        }
+      } catch (err) {
+        console.error("Error fetching app logo:", err);
+      }
+    };
+    fetchLogo();
+  }, []);
+
+  const handleLogoUpdate = async (newLogo: string) => {
+    try {
+      await setDoc(doc(db, "settings", "app_config"), { logoBase64: newLogo }, { merge: true });
+      setAppLogo(newLogo);
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = newLogo;
+    } catch (err) {
+      console.error("Error updating logo:", err);
+      alert("Failed to update logo");
+    }
+  };
 
   const handleCustomLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -502,65 +650,69 @@ export default function App() {
   }, []);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-sans">Loading MTKN ITSM Portal...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-sans">Loading MTKN ITSM Portal...</div>;
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800 font-sans p-4">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans p-4">
         <motion.div
           initial={{ opacity: 0, y: 15, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-white p-8 border border-slate-200 rounded-2xl shadow-xl text-center max-w-md w-full"
+          className="bg-white dark:bg-slate-800 p-8 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl text-center max-w-md w-full"
         >
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg rotate-3 group hover:rotate-0 transition-transform">
-            <Shield className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg rotate-3 group hover:rotate-0 transition-transform overflow-hidden">
+            {appLogo ? (
+              <img src={appLogo} alt="Logo" className="w-full h-full object-cover" />
+            ) : (
+              <Shield className="w-8 h-8 text-white" />
+            )}
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">MTKN ITSM</h2>
-          <p className="text-slate-500 text-sm mb-8">Secure Enterprise IT Operations Portal</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">MTKN ITSM</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">Secure Enterprise IT Operations Portal</p>
           
           <form onSubmit={handleCustomLogin} className="space-y-4 mb-6 text-left">
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Username</label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Username</label>
               <div className="relative">
                 <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="text" 
                   value={username}
                   onChange={e => setUsername(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:text-white transition-all"
                   placeholder="Username"
                   required
                 />
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Password</label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Password</label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="password" 
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:text-white transition-all"
                   placeholder="••••••••"
                   required
                 />
               </div>
             </div>
-            {loginError && <p className="text-red-500 text-[10px] bg-red-50 p-2 rounded border border-red-100">{loginError}</p>}
+            {loginError && <p className="text-red-500 dark:text-red-400 text-[10px] bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-100 dark:border-red-900/50">{loginError}</p>}
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg shadow-sm text-sm font-semibold hover:bg-slate-800 transition-colors disabled:opacity-50 min-h-[44px] cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-lg shadow-sm text-sm font-semibold hover:bg-slate-800 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 min-h-[44px] cursor-pointer"
             >
               {isLoggingIn ? "Signing in..." : <><LogIn className="w-4 h-4" /> Sign In</>}
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-400 font-medium font-sans">
-            Developed by <span className="text-slate-700 font-semibold">Saw Pyae Phyo Kyaw</span>
+          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50 text-[11px] text-slate-400 dark:text-slate-500 font-medium font-sans">
+            Developed by <span className="text-slate-700 dark:text-slate-300 font-semibold">Saw Pyae Phyo Kyaw</span>
           </div>
         </motion.div>
       </div>
@@ -569,16 +721,20 @@ export default function App() {
 
   return (
     <Router>
-      <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
+      <div className="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-200 overflow-hidden">
         <Sidebar 
           role={userRole} 
           userEmail={user?.email} 
           displayName={userDisplayName}
           photoURL={userPhotoURL}
           userPermissions={userPermissions}
+          appLogo={appLogo}
+          onLogoUpdate={handleLogoUpdate}
           onOpenProfile={() => setIsProfileModalOpen(true)}
+          isDarkMode={isDarkMode}
+          toggleTheme={toggleTheme}
         />
-        <main className="flex-1 flex flex-col overflow-y-auto">
+        <main className="flex-1 flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-900">
           <Routes>
             <Route 
               path="/" 

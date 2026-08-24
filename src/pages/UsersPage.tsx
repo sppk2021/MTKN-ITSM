@@ -4,7 +4,8 @@ import { db, auth } from "../lib/firebase";
 import { createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { 
   UserPlus, Shield, X, Key, Trash2, RefreshCw, Eye, EyeOff, 
-  Copy, Check, Sliders, Lock, Search, ShieldCheck, CheckCircle2 
+  Copy, Check, Sliders, Lock, Search, ShieldCheck, CheckCircle2,
+  Mail, Edit2, Building2, Phone, User as UserIcon
 } from "lucide-react";
 import { saveTicketsLocal } from "../lib/offlineStorage";
 import { 
@@ -30,16 +31,39 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUser, setNewUser] = useState<{
     username: string;
+    email: string;
     password: string;
     role: UserRole;
     permissions: UserPermissions;
   }>({ 
     username: '', 
+    email: '',
     password: '', 
     role: 'it_assistant',
     permissions: JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS.it_assistant))
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Edit User Details (Email, Name, Role, Dept, Phone) state
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<User | null>(null);
+  const [editFormData, setEditFormData] = useState<{
+    email: string;
+    displayName: string;
+    fullName: string;
+    role: UserRole;
+    department: string;
+    phone: string;
+    status: string;
+  }>({
+    email: '',
+    displayName: '',
+    fullName: '',
+    role: 'staff',
+    department: '',
+    phone: '',
+    status: 'active'
+  });
+  const [isSavingUserEdit, setIsSavingUserEdit] = useState(false);
 
   // Edit Permissions state
   const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<User | null>(null);
@@ -216,6 +240,64 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
     }
   };
 
+  const handleOpenEditModal = (user: User) => {
+    setSelectedUserForEdit(user);
+    setEditFormData({
+      email: user.email || '',
+      displayName: user.displayName || user.username || '',
+      fullName: user.fullName || '',
+      role: user.role || 'staff',
+      department: user.department || '',
+      phone: user.phone || '',
+      status: user.status || 'active'
+    });
+  };
+
+  const handleSaveUserEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForEdit) return;
+
+    if (!canEditUsers) {
+      alert("Permission Denied: You do not have permission to modify user details.");
+      return;
+    }
+
+    const trimmedEmail = editFormData.email.trim();
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      alert("Please provide a valid email address.");
+      return;
+    }
+
+    setIsSavingUserEdit(true);
+    try {
+      const updatePayload: Record<string, any> = {
+        email: trimmedEmail,
+        displayName: editFormData.displayName.trim() || editFormData.fullName.trim() || selectedUserForEdit.username,
+        fullName: editFormData.fullName.trim(),
+        role: editFormData.role,
+        department: editFormData.department.trim(),
+        phone: editFormData.phone.trim(),
+        status: editFormData.status,
+        updatedAt: serverTimestamp()
+      };
+
+      await updateDoc(doc(db, "users", selectedUserForEdit.id), updatePayload);
+
+      setUsers(users.map(u => u.id === selectedUserForEdit.id ? { 
+        ...u, 
+        ...updatePayload 
+      } : u));
+
+      setSelectedUserForEdit(null);
+      alert(`User profile for "${updatePayload.displayName || trimmedEmail}" updated successfully!`);
+    } catch (error: any) {
+      console.error("Error updating user details:", error);
+      alert(`Failed to save user updates: ${error.message}`);
+    } finally {
+      setIsSavingUserEdit(false);
+    }
+  };
+
   const handleClearSystemData = async () => {
     if (!canDeleteUsers) {
       alert("Permission Denied: Only administrators with delete privileges can clear system data.");
@@ -268,8 +350,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
     
     setIsSubmitting(true);
     try {
-      const domain = "mtknitsm.local";
-      const email = `${newUser.username.toLowerCase()}@${domain}`;
+      const email = newUser.email.trim() || `${newUser.username.toLowerCase()}@mtknitsm.local`;
       
       const userCredential = await createUserWithEmailAndPassword(auth, email, newUser.password);
       const uid = userCredential.user.uid;
@@ -288,12 +369,13 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
       setShowAddModal(false);
       setNewUser({ 
         username: '', 
+        email: '',
         password: '', 
         role: 'it_assistant',
         permissions: JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS.it_assistant))
       });
       fetchUsers();
-      alert(`User account "${newUser.username}" created successfully with custom tab permissions!`);
+      alert(`User account "${newUser.username}" (${email}) created successfully!`);
     } catch (error: any) {
       console.error("Error adding user:", error);
       alert(`Error creating user: ${error.message}`);

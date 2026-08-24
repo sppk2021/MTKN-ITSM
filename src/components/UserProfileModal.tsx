@@ -8,6 +8,7 @@ import {
 import { auth, db } from "../lib/firebase";
 import { 
   updateProfile, 
+  updateEmail,
   updatePassword, 
   reauthenticateWithCredential, 
   EmailAuthProvider,
@@ -24,7 +25,7 @@ interface UserProfileModalProps {
   currentUser: FirebaseUser | null;
   userRole: string;
   userPermissions?: UserPermissions;
-  onProfileUpdated?: (updatedData: { displayName: string; photoURL?: string }) => void;
+  onProfileUpdated?: (updatedData: { displayName: string; photoURL?: string; email?: string }) => void;
 }
 
 export function UserProfileModal({
@@ -39,6 +40,7 @@ export function UserProfileModal({
   
   // Profile form state
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [department, setDepartment] = useState("");
   const [photoURL, setPhotoURL] = useState<string>("");
@@ -89,6 +91,7 @@ export function UserProfileModal({
       setInitialLoading(true);
       try {
         setFullName(currentUser.displayName || "");
+        setEmail(currentUser.email || "");
         setPhotoURL(currentUser.photoURL || "");
 
         // Fetch extra fields from Firestore
@@ -102,6 +105,9 @@ export function UserProfileModal({
             }
             if (data.fullName) {
               setFullName(data.fullName);
+            }
+            if (data.email) {
+              setEmail(data.email);
             }
             if (data.photoURL) {
               setPhotoURL(data.photoURL);
@@ -118,6 +124,7 @@ export function UserProfileModal({
           const found = cachedUsers.find(u => u.id === currentUser.uid);
           if (found) {
             if (found.displayName || found.fullName) setFullName(found.displayName || found.fullName || "");
+            if (found.email) setEmail(found.email);
             if (found.photoURL) setPhotoURL(found.photoURL);
             if (found.phone) setPhone(found.phone);
             if (found.department) setDepartment(found.department);
@@ -204,29 +211,49 @@ export function UserProfileModal({
     setIsSavingProfile(true);
 
     try {
-      const trimmedName = fullName.trim() || currentUser.email?.split('@')[0] || "User";
+      const trimmedName = fullName.trim() || email.split('@')[0] || "User";
+      const trimmedEmail = email.trim().toLowerCase();
       const trimmedPhone = phone.trim();
       const trimmedDept = department.trim();
+
+      if (!trimmedEmail || !trimmedEmail.includes("@")) {
+        setProfileErrorMessage("Please enter a valid email address.");
+        setIsSavingProfile(false);
+        return;
+      }
 
       const profilePayload = {
         displayName: trimmedName,
         fullName: trimmedName,
+        email: trimmedEmail,
         photoURL: photoURL || null,
         phone: trimmedPhone,
         department: trimmedDept
       };
 
-      // 1. Update Firebase Auth Profile
+      // 1. Update Firebase Auth Profile (Name & Photo)
       try {
         await updateProfile(currentUser, {
           displayName: trimmedName,
           photoURL: photoURL || ""
         });
       } catch (authErr) {
-        console.warn("Could not update auth profile directly:", authErr);
+        console.warn("Could not update auth profile displayName/photo:", authErr);
       }
 
-      // 2. Update Firestore User Document
+      // 2. Update Firebase Auth Email if modified
+      if (currentUser.email && trimmedEmail !== currentUser.email.toLowerCase()) {
+        try {
+          await updateEmail(currentUser, trimmedEmail);
+        } catch (emailErr: any) {
+          console.warn("Direct Firebase Auth email update notification:", emailErr);
+          if (emailErr.code === "auth/requires-recent-login") {
+            setProfileSuccessMessage("Note: Updated email in database. Re-login is required to update Auth credentials.");
+          }
+        }
+      }
+
+      // 3. Update Firestore User Document
       if (navigator.onLine) {
         const userRef = doc(db, "users", currentUser.uid);
         await updateDoc(userRef, {
@@ -241,7 +268,7 @@ export function UserProfileModal({
         });
       }
 
-      // 3. Update Local IndexedDB
+      // 4. Update Local IndexedDB
       const cachedUsers = await getUsersLocal();
       const updatedList = cachedUsers.map(u => {
         if (u.id === currentUser.uid) {
@@ -249,6 +276,7 @@ export function UserProfileModal({
             ...u,
             displayName: trimmedName,
             fullName: trimmedName,
+            email: trimmedEmail,
             photoURL: photoURL || undefined,
             phone: trimmedPhone,
             department: trimmedDept,
@@ -259,17 +287,18 @@ export function UserProfileModal({
       });
       await saveUsersLocal(updatedList);
 
-      // 4. Notify Parent Component
+      // 5. Notify Parent Component
       if (onProfileUpdated) {
         onProfileUpdated({
           displayName: trimmedName,
-          photoURL: photoURL || undefined
+          photoURL: photoURL || undefined,
+          email: trimmedEmail
         });
       }
 
       setProfileSuccessMessage(
         navigator.onLine 
-          ? "Profile updated successfully!" 
+          ? "Profile and email details updated successfully!" 
           : "Profile saved offline! Changes will sync when reconnected."
       );
 
@@ -595,23 +624,29 @@ export function UserProfileModal({
                     </div>
                   </div>
 
-                  {/* Email (Read Only) */}
+                  {/* Email Address */}
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Email Address (Account Identifier)
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Email Address <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-[11px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                        Editable Email
+                      </span>
+                    </div>
                     <div className="relative">
                       <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="email"
-                        value={currentUser?.email || ""}
-                        readOnly
-                        disabled
-                        className="w-full bg-slate-100 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-500 cursor-not-allowed select-none font-mono"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="e.g. user@mtknitsm.com"
+                        required
+                        className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 placeholder-slate-400 font-mono"
                       />
                     </div>
                     <p className="text-[11px] text-slate-400 mt-1">
-                      Account email is managed by your system administrator.
+                      Used for logging in, receiving system outage alerts, and account communications.
                     </p>
                   </div>
 
