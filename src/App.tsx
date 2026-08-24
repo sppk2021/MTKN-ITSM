@@ -20,6 +20,7 @@ import SupportTickets from "./pages/SupportTickets";
 import SoftwareStatus from "./pages/SoftwareStatus";
 import ISPManagement from "./pages/ISPManagement";
 import { UserProfileModal } from "./components/UserProfileModal";
+import { SyncStatusBadge } from "./components/SyncStatusBadge";
 import { cn } from "./lib/utils";
 import { motion } from "motion/react";
 import { PermissionGuard } from "./components/PermissionGuard";
@@ -300,8 +301,8 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
         )}
       </nav>
 
-      {/* Theme Switcher */}
-      <div className="mt-auto pt-4 pb-2 shrink-0 border-b border-slate-200 dark:border-slate-800">
+      {/* Theme Switcher and Sync Status */}
+      <div className="mt-auto pt-4 pb-2 shrink-0 border-b border-slate-200 dark:border-slate-800 space-y-2">
         <div className="relative group">
           <button
             onClick={toggleTheme}
@@ -322,6 +323,20 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
             </div>
           )}
         </div>
+
+        {/* Sync Status Badge */}
+        {(!isCollapsed || isMobileOpen) ? (
+          <div className="px-1 py-1">
+            <SyncStatusBadge className="w-full justify-center" />
+          </div>
+        ) : (
+          <div className="flex justify-center py-1 relative group">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
+            <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-800 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              Sync Active (IndexedDB / Firebase)
+            </div>
+          </div>
+        )}
       </div>
 
       {/* User Profile Section in Sidebar */}
