@@ -525,7 +525,9 @@ export default function App() {
   const [userDisplayName, setUserDisplayName] = useState<string>("");
   const [userPhotoURL, setUserPhotoURL] = useState<string>("");
   const [userPermissions, setUserPermissions] = useState<UserPermissions | undefined>(undefined);
-  const [appLogo, setAppLogo] = useState<string | null>(null);
+  const [appLogo, setAppLogo] = useState<string | null>(() => {
+    return localStorage.getItem("app_logo_cache") || null;
+  });
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
@@ -556,21 +558,73 @@ export default function App() {
 
   const toggleTheme = () => setIsDarkMode(prev => !prev);
 
+  const applyAppLogo = (logoData: string) => {
+    setAppLogo(logoData);
+    localStorage.setItem("app_logo_cache", logoData);
+
+    // 1. Favicon
+    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    link.href = logoData;
+
+    // 2. Apple Touch Icon (iOS home screen app icon)
+    let appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+    if (!appleLink) {
+      appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      document.getElementsByTagName('head')[0].appendChild(appleLink);
+    }
+    appleLink.href = logoData;
+
+    // 3. Dynamic PWA Manifest for Android & iOS installation
+    const manifestData = {
+      name: "MTKN ITSM Mobile",
+      short_name: "MTKN ITSM",
+      description: "Enterprise IT Service Management & Helpdesk Portal",
+      start_url: "/",
+      display: "standalone",
+      background_color: "#0f172a",
+      theme_color: "#2563eb",
+      icons: [
+        {
+          src: logoData,
+          sizes: "512x512",
+          type: "image/png",
+          purpose: "any maskable"
+        }
+      ]
+    };
+    const stringManifest = JSON.stringify(manifestData);
+    const blob = new Blob([stringManifest], { type: 'application/json' });
+    const manifestURL = URL.createObjectURL(blob);
+    
+    let manifestLink = document.querySelector("link[rel='manifest']") as HTMLLinkElement;
+    if (!manifestLink) {
+      manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      document.getElementsByTagName('head')[0].appendChild(manifestLink);
+    }
+    manifestLink.href = manifestURL;
+  };
+
   useEffect(() => {
+    // Apply cached logo immediately if available
+    const cachedLogo = localStorage.getItem("app_logo_cache");
+    if (cachedLogo) {
+      applyAppLogo(cachedLogo);
+    }
+
     const fetchLogo = async () => {
       try {
         const docRef = doc(db, "settings", "app_config");
         const docSnap = await getDoc(docRef);
         if (docSnap.exists() && docSnap.data().logoBase64) {
           const logoData = docSnap.data().logoBase64;
-          setAppLogo(logoData);
-          let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-          if (!link) {
-            link = document.createElement('link');
-            link.rel = 'icon';
-            document.getElementsByTagName('head')[0].appendChild(link);
-          }
-          link.href = logoData;
+          applyAppLogo(logoData);
         }
       } catch (err) {
         console.warn("Notice: App logo fetch offline/unavailable:", err);
@@ -582,14 +636,7 @@ export default function App() {
   const handleLogoUpdate = async (newLogo: string) => {
     try {
       await setDoc(doc(db, "settings", "app_config"), { logoBase64: newLogo }, { merge: true });
-      setAppLogo(newLogo);
-      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.getElementsByTagName('head')[0].appendChild(link);
-      }
-      link.href = newLogo;
+      applyAppLogo(newLogo);
     } catch (err) {
       console.error("Error updating logo:", err);
       alert("Failed to update logo");
