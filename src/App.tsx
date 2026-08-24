@@ -10,6 +10,7 @@ import { auth, db } from "./lib/firebase";
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
+import { AppLogoSelectorModal } from "./components/AppLogoSelectorModal";
 import ManagementDashboard from "./pages/ManagementDashboard";
 import UsersPage from "./pages/UsersPage";
 import Reports from "./pages/Reports";
@@ -131,6 +132,7 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
     .substring(0, 2)
     .toUpperCase();
 
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,14 +184,22 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
                 className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  fileInputRef.current?.click();
+                  setIsLogoModalOpen(true);
                 }}
-                title="Edit Logo"
+                title="Change App Logo or Icon"
               >
                 <Settings2 className="w-4 h-4 text-white" />
               </div>
             )}
           </button>
+          <AppLogoSelectorModal
+            isOpen={isLogoModalOpen}
+            onClose={() => setIsLogoModalOpen(false)}
+            currentLogo={appLogo || null}
+            onSelectLogo={newLogo => {
+              if (onLogoUpdate) onLogoUpdate(newLogo);
+            }}
+          />
           {(!isCollapsed || isMobileOpen) && (
             <span className="text-slate-900 dark:text-white font-bold text-lg tracking-tight truncate flex-1">
               MTKN ITSM
@@ -741,7 +751,7 @@ export default function App() {
           isDarkMode={isDarkMode}
           toggleTheme={toggleTheme}
         />
-        <main className="flex-1 flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-900">
+        <main className="flex-1 flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-900 pb-20 md:pb-6">
           <Routes>
             <Route 
               path="/" 
@@ -818,6 +828,45 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+
+        {/* Mobile Bottom Navigation Bar for iOS & Android Web App UX */}
+        <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-3 py-2 flex items-center justify-around shadow-xl pb-[env(safe-area-inset-bottom)]">
+          <Link
+            to="/"
+            className="flex flex-col items-center justify-center p-1.5 rounded-xl text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors"
+          >
+            <LayoutDashboard className="w-5 h-5 mb-0.5" />
+            <span>Home</span>
+          </Link>
+          <Link
+            to="/tickets"
+            className="flex flex-col items-center justify-center p-1.5 rounded-xl text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors"
+          >
+            <Ticket className="w-5 h-5 mb-0.5" />
+            <span>Tickets</span>
+          </Link>
+          <Link
+            to="/repairs"
+            className="flex flex-col items-center justify-center p-1.5 rounded-xl text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors"
+          >
+            <Wrench className="w-5 h-5 mb-0.5" />
+            <span>Repairs</span>
+          </Link>
+          <Link
+            to="/isp"
+            className="flex flex-col items-center justify-center p-1.5 rounded-xl text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors"
+          >
+            <Globe className="w-5 h-5 mb-0.5" />
+            <span>ISP</span>
+          </Link>
+          <Link
+            to="/reports"
+            className="flex flex-col items-center justify-center p-1.5 rounded-xl text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors"
+          >
+            <BarChart3 className="w-5 h-5 mb-0.5" />
+            <span>Reports</span>
+          </Link>
+        </nav>
 
         {/* User Profile Modal */}
         <UserProfileModal
