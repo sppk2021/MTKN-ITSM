@@ -13,8 +13,10 @@ import {
   getUsersLocal, 
   addPendingSyncAction, 
   getPendingSyncQueue, 
-  clearPendingSyncQueue 
+  clearPendingSyncQueue,
+  processAllPendingSyncActions
 } from "../lib/offlineStorage";
+import { SyncStatusBadge } from "../components/SyncStatusBadge";
 
 export interface FirestoreErrorInfo {
   error: string;
@@ -472,31 +474,9 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
     <>
       <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2 flex-wrap">
+          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2.5 flex-wrap">
             <span>Support Tickets</span>
-            {isOffline && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                <WifiOff className="w-3 h-3 text-amber-600" />
-                <span>Offline Mode (IndexedDB)</span>
-              </span>
-            )}
-            {!isOffline && pendingSyncCount > 0 && (
-              <button 
-                onClick={processSyncQueue}
-                disabled={isSyncing}
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-200 transition-colors cursor-pointer"
-                title="Click to sync pending offline changes"
-              >
-                {isSyncing ? <Loader2 className="w-3 h-3 animate-spin text-blue-600" /> : <RefreshCw className="w-3 h-3 text-blue-600" />}
-                <span>{isSyncing ? "Syncing..." : `${pendingSyncCount} pending syncs`}</span>
-              </button>
-            )}
-            {!isOffline && pendingSyncCount === 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <Database className="w-3 h-3 text-emerald-600" />
-                <span>IndexedDB Sync Active</span>
-              </span>
-            )}
+            <SyncStatusBadge onSynced={fetchTickets} />
           </h1>
           <p className="text-xs text-slate-500">Manage IT support requests with local-first offline fallback</p>
         </div>

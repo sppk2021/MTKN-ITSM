@@ -4,6 +4,14 @@ import { auth, db } from "../lib/firebase";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { User, UserPermissions } from "../types";
+import { 
+  saveCalendarEventsLocal, 
+  getCalendarEventsLocal, 
+  saveUsersLocal, 
+  getUsersLocal, 
+  addPendingSyncAction 
+} from "../lib/offlineStorage";
+import { SyncStatusBadge } from "../components/SyncStatusBadge";
 
 interface SupportCalendarProps {
   userRole?: string;
@@ -28,21 +36,48 @@ export default function SupportCalendar({ userRole = 'staff', userPermissions }:
 
   const fetchEvents = async () => {
     try {
+      if (!navigator.onLine) {
+        const cached = await getCalendarEventsLocal();
+        if (cached.length > 0) {
+          setEvents(cached);
+        }
+        return;
+      }
       const snap = await getDocs(query(collection(db, "calendarEvents")));
-      setEvents(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setEvents(list);
+      await saveCalendarEventsLocal(list);
     } catch (error) {
       console.error(error);
+      const cached = await getCalendarEventsLocal();
+      if (cached.length > 0) {
+        setEvents(cached);
+      }
     }
   };
 
   const fetchUsers = async () => {
     try {
+      if (!navigator.onLine) {
+        const cached = await getUsersLocal();
+        if (cached.length > 0) {
+          setAllUsers(cached);
+          setAssistants(cached.filter(u => u.role === 'it_assistant' || u.role === 'admin'));
+        }
+        return;
+      }
       const snap = await getDocs(query(collection(db, "users")));
       const fetchedAll = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setAllUsers(fetchedAll);
       setAssistants(fetchedAll.filter(u => u.role === 'it_assistant' || u.role === 'admin'));
+      await saveUsersLocal(fetchedAll);
     } catch (e) {
       console.error(e);
+      const cached = await getUsersLocal();
+      if (cached.length > 0) {
+        setAllUsers(cached);
+        setAssistants(cached.filter(u => u.role === 'it_assistant' || u.role === 'admin'));
+      }
     }
   };
 
@@ -63,14 +98,34 @@ export default function SupportCalendar({ userRole = 'staff', userPermissions }:
       const payload: any = {
         ...newEvent,
         authorId: auth.currentUser?.uid || '',
-        authorRole: userRole,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        authorRole: userRole
       };
       if (!payload.dueDate) {
         delete payload.dueDate;
       }
-      await addDoc(collection(db, "calendarEvents"), payload);
+
+      if (!navigator.onLine) {
+        const localEvt = {
+          id: `local_evt_${Date.now()}`,
+          ...payload,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        const updated = [localEvt, ...events];
+        setEvents(updated);
+        await saveCalendarEventsLocal(updated);
+        await addPendingSyncAction('CREATE_CALENDAR_EVENT', payload);
+        setShowModal(false);
+        setNewEvent({ title: '', description: '', startTime: '', endTime: '', dueDate: '', location: '', assigneeId: '', status: 'scheduled', eventType: 'standard' });
+        alert("Event saved locally in IndexedDB!");
+        return;
+      }
+
+      await addDoc(collection(db, "calendarEvents"), {
+        ...payload,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
       setShowModal(false);
       setNewEvent({ title: '', description: '', startTime: '', endTime: '', dueDate: '', location: '', assigneeId: '', status: 'scheduled', eventType: 'standard' });
       fetchEvents();
@@ -94,6 +149,15 @@ export default function SupportCalendar({ userRole = 'staff', userPermissions }:
 
     try {
       const nextStatus = current === 'scheduled' ? 'in_progress' : current === 'in_progress' ? 'resolved' : 'scheduled';
+
+      if (!navigator.onLine) {
+        const updated = events.map(e => e.id === id ? { ...e, status: nextStatus, updatedAt: new Date().toISOString() } : e);
+        setEvents(updated);
+        await saveCalendarEventsLocal(updated);
+        await addPendingSyncAction('UPDATE_CALENDAR_EVENT', { id, updates: { status: nextStatus } });
+        return;
+      }
+
       await updateDoc(doc(db, "calendarEvents", id), { status: nextStatus, updatedAt: serverTimestamp() });
       fetchEvents();
     } catch (e) {
@@ -114,6 +178,16 @@ export default function SupportCalendar({ userRole = 'staff', userPermissions }:
     }
 
     if (!window.confirm("Are you sure you want to delete this event?")) return;
+
+    if (!navigator.onLine) {
+      const updated = events.filter(e => e.id !== id);
+      setEvents(updated);
+      await saveCalendarEventsLocal(updated);
+      await addPendingSyncAction('DELETE_CALENDAR_EVENT', { id });
+      alert("Event deleted locally in IndexedDB!");
+      return;
+    }
+
     try {
       await deleteDoc(doc(db, "calendarEvents", id));
       fetchEvents();
@@ -129,8 +203,11 @@ export default function SupportCalendar({ userRole = 'staff', userPermissions }:
     <>
       <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">IT Support Calendar</h1>
-          <p className="text-xs text-slate-500">Manage and schedule tasks</p>
+          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2.5 flex-wrap">
+            <span>IT Support Calendar</span>
+            <SyncStatusBadge onSynced={fetchEvents} />
+          </h1>
+          <p className="text-xs text-slate-500">Manage and schedule tasks with local-first offline sync</p>
         </div>
         <button
           onClick={() => setShowModal(true)}

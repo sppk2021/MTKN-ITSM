@@ -5,6 +5,14 @@ import { format } from "date-fns";
 import { Search, X } from "lucide-react";
 import { Repair, User, OperationType, UserPermissions } from "../types";
 import { generateNextRepairCode } from "../lib/idGenerator";
+import { 
+  saveRepairsLocal, 
+  getRepairsLocal, 
+  addPendingSyncAction, 
+  saveUsersLocal, 
+  getUsersLocal 
+} from "../lib/offlineStorage";
+import { SyncStatusBadge } from "../components/SyncStatusBadge";
 
 interface RepairsTrackingProps {
   userRole?: string;
@@ -44,18 +52,44 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
 
   const fetchRepairs = async () => {
     try {
+      if (!navigator.onLine) {
+        const cached = await getRepairsLocal();
+        if (cached.length > 0) {
+          setRepairs(cached);
+        }
+        return;
+      }
       const snap = await getDocs(query(collection(db, "repairs")));
-      setRepairs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Repair)));
+      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Repair));
+      setRepairs(list);
+      await saveRepairsLocal(list);
     } catch (e) {
       console.error(e);
+      const cached = await getRepairsLocal();
+      if (cached.length > 0) {
+        setRepairs(cached);
+      }
     }
   };
 
   const fetchUsers = async () => {
     try {
+      if (!navigator.onLine) {
+        const cached = await getUsersLocal();
+        if (cached.length > 0) {
+          setAllUsers(cached);
+          const fetchedAssistants = cached.filter(u => ['it_assistant', 'admin', 'management'].includes(u.role));
+          setAssistants(fetchedAssistants);
+          if (fetchedAssistants.length > 0) {
+            setNewRepair(prev => ({ ...prev, mechanicId: prev.mechanicId === 'unassigned' ? fetchedAssistants[0].id : prev.mechanicId }));
+          }
+        }
+        return;
+      }
       const snap = await getDocs(query(collection(db, "users")));
       const fetchedAll = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setAllUsers(fetchedAll);
+      await saveUsersLocal(fetchedAll);
       const fetchedAssistants = fetchedAll.filter(u => ['it_assistant', 'admin', 'management'].includes(u.role));
       setAssistants(fetchedAssistants);
       if (fetchedAssistants.length > 0) {
@@ -63,6 +97,12 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
       }
     } catch (e) {
       console.error(e);
+      const cached = await getUsersLocal();
+      if (cached.length > 0) {
+        setAllUsers(cached);
+        const fetchedAssistants = cached.filter(u => ['it_assistant', 'admin', 'management'].includes(u.role));
+        setAssistants(fetchedAssistants);
+      }
     }
   };
 
@@ -80,18 +120,39 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const repairCode = generateNextRepairCode(repairs);
+    const repairPayload = {
+      ...newRepair,
+      repairCode,
+      authorId: auth.currentUser?.uid || '',
+      authorRole: userRole,
+      history: [{ note: "Repair ticket created", date: new Date().toISOString() }],
+    };
+
+    if (!navigator.onLine) {
+      const localRepair: Repair = {
+        id: `local_rp_${Date.now()}`,
+        ...repairPayload,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      const updated = [localRepair, ...repairs];
+      setRepairs(updated);
+      await saveRepairsLocal(updated);
+      await addPendingSyncAction('CREATE_REPAIR', repairPayload);
+      setShowModal(false);
+      resetNewRepair();
+      alert("Repair record saved locally in IndexedDB. Will sync when back online!");
+      return;
+    }
+
     try {
       await addDoc(collection(db, "repairs"), {
-        ...newRepair,
-        repairCode,
-        authorId: auth.currentUser?.uid || '',
-        authorRole: userRole,
-        history: [{ note: "Repair ticket created", date: new Date().toISOString() }],
+        ...repairPayload,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
       setShowModal(false);
-      setNewRepair({ title: '', device: '', reportedIssues: '', shopCenterName: '', status: 'pending', mechanicId: assistants.length > 0 ? assistants[0].id : 'unassigned' });
+      resetNewRepair();
       fetchRepairs();
     } catch (error) {
       console.error(error);
@@ -107,8 +168,20 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
       return;
     }
 
+    const newHistory = [...(currentHistory || []), { note: historyNote, date: new Date().toISOString() }];
+
+    if (!navigator.onLine) {
+      const updated = repairs.map(r => r.id === repairId ? { ...r, history: newHistory, updatedAt: new Date().toISOString() } : r);
+      setRepairs(updated);
+      await saveRepairsLocal(updated);
+      await addPendingSyncAction('UPDATE_REPAIR', { id: repairId, updates: { history: newHistory } });
+      setHistoryNote('');
+      setShowHistoryModal(null);
+      alert("Repair history updated locally in IndexedDB!");
+      return;
+    }
+
     try {
-      const newHistory = [...currentHistory, { note: historyNote, date: new Date().toISOString() }];
       await updateDoc(doc(db, "repairs", repairId), {
         history: newHistory,
         updatedAt: serverTimestamp()
@@ -134,6 +207,16 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
     }
 
     if (!window.confirm("Delete this repair record?")) return;
+
+    if (!navigator.onLine) {
+      const updated = repairs.filter(r => r.id !== id);
+      setRepairs(updated);
+      await saveRepairsLocal(updated);
+      await addPendingSyncAction('DELETE_REPAIR', { id });
+      alert("Repair deleted locally in IndexedDB!");
+      return;
+    }
+
     try {
       await deleteDoc(doc(db, "repairs", id));
       fetchRepairs();
@@ -149,14 +232,25 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
       return;
     }
 
+    const updates: any = {
+      [field]: value
+    };
+    if (field === 'status' && value === 'completed') updates.completionDate = new Date().toISOString();
+    if (field === 'status' && value !== 'completed') updates.completionDate = null;
+
+    if (!navigator.onLine) {
+      const updated = repairs.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r);
+      setRepairs(updated);
+      await saveRepairsLocal(updated);
+      await addPendingSyncAction('UPDATE_REPAIR', { id, updates });
+      return;
+    }
+
     try {
-      const payload: any = {
-        [field]: value,
+      await updateDoc(doc(db, "repairs", id), {
+        ...updates,
         updatedAt: serverTimestamp()
-      };
-      if (field === 'status' && value === 'completed') payload.completionDate = new Date().toISOString();
-      if (field === 'status' && value !== 'completed') payload.completionDate = null;
-      await updateDoc(doc(db, "repairs", id), payload);
+      });
       fetchRepairs();
     } catch (e) {
       console.error(e);
@@ -184,8 +278,11 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
     <>
       <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Repairs Tracking</h1>
-          <p className="text-xs text-slate-500">Log hardware and system repairs</p>
+          <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2.5 flex-wrap">
+            <span>Repairs Tracking</span>
+            <SyncStatusBadge onSynced={fetchRepairs} />
+          </h1>
+          <p className="text-xs text-slate-500">Log hardware and system repairs with local-first offline sync</p>
         </div>
         <button
           onClick={() => setShowModal(true)}

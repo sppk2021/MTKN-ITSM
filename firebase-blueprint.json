@@ -7,10 +7,15 @@
       "properties": {
         "email": { "type": "string" },
         "displayName": { "type": "string" },
+        "fullName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "phone": { "type": "string" },
+        "department": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "management", "it_assistant", "staff"] },
         "status": { "type": "string", "enum": ["active", "disabled"] },
         "permissions": { "type": "object" },
         "password": { "type": "string" },
+        "lastPasswordChange": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },

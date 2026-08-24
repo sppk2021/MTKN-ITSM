@@ -399,8 +399,24 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                   return (
                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-3.5 whitespace-nowrap font-medium text-slate-800">
-                        <div className="font-semibold text-slate-900">{user.username || user.email?.split('@')[0]}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{user.email}</div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">
+                            {user.photoURL ? (
+                              <img src={user.photoURL} alt={user.displayName || user.username} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                              (user.displayName || user.fullName || user.username || user.email || 'U').substring(0, 2).toUpperCase()
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                              <span>{user.displayName || user.fullName || user.username || user.email?.split('@')[0]}</span>
+                              {user.id === auth.currentUser?.uid && (
+                                <span className="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-bold uppercase">You</span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">{user.email}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-5 py-3.5 whitespace-nowrap text-slate-700 font-mono text-xs">
                         <div className="flex items-center gap-1.5">

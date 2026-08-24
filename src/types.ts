@@ -78,6 +78,11 @@ export interface User {
   id: string;
   username: string;
   displayName?: string;
+  fullName?: string;
+  photoURL?: string;
+  avatarUrl?: string;
+  phone?: string;
+  department?: string;
   email: string;
   role: UserRole;
   status: 'active' | 'disabled';
@@ -86,6 +91,7 @@ export interface User {
   permissions?: UserPermissions;
   createdAt?: any;
   updatedAt?: any;
+  lastPasswordChange?: any;
 }
 
 export interface DowntimeRecord {

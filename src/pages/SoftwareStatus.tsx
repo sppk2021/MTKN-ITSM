@@ -4,6 +4,14 @@ import { auth, db } from "../lib/firebase";
 import { format, differenceInDays } from "date-fns";
 import { Plus, X, Server, Globe2, Edit2, ShieldAlert, Key, Trash2 } from "lucide-react";
 import { LicenseStatus, OperationType, User, UserPermissions } from "../types";
+import { 
+  saveLicensesLocal, 
+  getLicensesLocal, 
+  saveUsersLocal, 
+  getUsersLocal, 
+  addPendingSyncAction 
+} from "../lib/offlineStorage";
+import { SyncStatusBadge } from "../components/SyncStatusBadge";
 
 interface SoftwareStatusProps {
   userRole?: string;
@@ -23,10 +31,23 @@ export default function SoftwareStatus({ userRole = 'staff', userPermissions }: 
 
   const fetchLicenses = async () => {
     try {
+      if (!navigator.onLine) {
+        const cached = await getLicensesLocal();
+        if (cached.length > 0) {
+          setLicenses(cached);
+        }
+        return;
+      }
       const snap = await getDocs(query(collection(db, "software_licenses")));
-      setLicenses(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as LicenseStatus));
+      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as LicenseStatus);
+      setLicenses(list);
+      await saveLicensesLocal(list);
     } catch (e) {
       console.error(e);
+      const cached = await getLicensesLocal();
+      if (cached.length > 0) {
+        setLicenses(cached);
+      }
     } finally {
       setLoading(false);
     }
@@ -34,10 +55,23 @@ export default function SoftwareStatus({ userRole = 'staff', userPermissions }: 
 
   const fetchUsers = async () => {
     try {
+      if (!navigator.onLine) {
+        const cached = await getUsersLocal();
+        if (cached.length > 0) {
+          setAllUsers(cached);
+        }
+        return;
+      }
       const snap = await getDocs(query(collection(db, "users")));
-      setAllUsers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+      const fetched = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setAllUsers(fetched);
+      await saveUsersLocal(fetched);
     } catch (e) {
       console.error(e);
+      const cached = await getUsersLocal();
+      if (cached.length > 0) {
+        setAllUsers(cached);
+      }
     }
   };
 
@@ -70,17 +104,51 @@ export default function SoftwareStatus({ userRole = 'staff', userPermissions }: 
           return;
         }
 
+        if (!navigator.onLine) {
+          const updated = licenses.map(l => l.id === editingId ? { ...l, ...newLicense, status, updatedAt: new Date().toISOString() } : l);
+          setLicenses(updated);
+          await saveLicensesLocal(updated);
+          await addPendingSyncAction('UPDATE_LICENSE', { id: editingId, updates: { ...newLicense, status } });
+          setShowModal(false);
+          setEditingId(null);
+          setNewLicense({ name: '', type: 'domain', expiryDate: '', notes: '', status: 'active', details: '' });
+          alert("License updated locally in IndexedDB!");
+          return;
+        }
+
         await updateDoc(doc(db, "software_licenses", editingId), {
           ...newLicense,
           status,
           updatedAt: serverTimestamp()
         });
       } else {
-        await addDoc(collection(db, "software_licenses"), {
+        const createPayload = {
           ...newLicense,
           status,
-          authorId: auth.currentUser?.uid,
-          authorRole: userRole,
+          authorId: auth.currentUser?.uid || '',
+          authorRole: userRole
+        };
+
+        if (!navigator.onLine) {
+          const localItem: LicenseStatus = {
+            id: `local_lic_${Date.now()}`,
+            ...createPayload,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          const updated = [localItem, ...licenses];
+          setLicenses(updated);
+          await saveLicensesLocal(updated);
+          await addPendingSyncAction('CREATE_LICENSE', createPayload);
+          setShowModal(false);
+          setEditingId(null);
+          setNewLicense({ name: '', type: 'domain', expiryDate: '', notes: '', status: 'active', details: '' });
+          alert("License saved locally in IndexedDB!");
+          return;
+        }
+
+        await addDoc(collection(db, "software_licenses"), {
+          ...createPayload,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
@@ -109,7 +177,7 @@ export default function SoftwareStatus({ userRole = 'staff', userPermissions }: 
     setNewLicense({
       name: license.name,
       type: license.type,
-      expiryDate: license.expiryDate.split('T')[0],
+      expiryDate: license.expiryDate ? license.expiryDate.split('T')[0] : '',
       notes: license.notes || '',
       status: license.status,
       details: license.details || ''
@@ -131,6 +199,16 @@ export default function SoftwareStatus({ userRole = 'staff', userPermissions }: 
     }
 
     if (!window.confirm("Are you sure you want to delete this item?")) return;
+
+    if (!navigator.onLine) {
+      const updated = licenses.filter(l => l.id !== id);
+      setLicenses(updated);
+      await saveLicensesLocal(updated);
+      await addPendingSyncAction('DELETE_LICENSE', { id });
+      alert("License deleted locally in IndexedDB!");
+      return;
+    }
+
     try {
       await deleteDoc(doc(db, "software_licenses", id));
       fetchLicenses();
@@ -154,10 +232,13 @@ export default function SoftwareStatus({ userRole = 'staff', userPermissions }: 
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 overflow-y-auto flex-1">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Software & Domains</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage domains, servers & Microsoft licenses status</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5 flex-wrap">
+            <span>Software & Domains</span>
+            <SyncStatusBadge onSynced={fetchLicenses} />
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">Manage domains, servers & Microsoft licenses with local-first offline sync</p>
         </div>
         <button
           onClick={() => { setEditingId(null); setNewLicense({ name: '', type: 'domain', expiryDate: '', notes: '', status: 'active', details: '' }); setShowModal(true); }}

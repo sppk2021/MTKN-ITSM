@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import { 
   LayoutDashboard, Users, BarChart3, CalendarDays, Wrench, LogOut, 
   Ticket, Globe, Server, Shield, Lock, User as UserIcon, LogIn, 
-  ChevronLeft, ChevronRight, Download, Menu, X as CloseIcon 
+  ChevronLeft, ChevronRight, Download, Menu, X as CloseIcon, 
+  UserCheck, Settings2, Sparkles 
 } from "lucide-react";
 import { auth, db } from "./lib/firebase";
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
@@ -17,6 +18,7 @@ import RepairsTracking from "./pages/RepairsTracking";
 import SupportTickets from "./pages/SupportTickets";
 import SoftwareStatus from "./pages/SoftwareStatus";
 import ISPManagement from "./pages/ISPManagement";
+import { UserProfileModal } from "./components/UserProfileModal";
 import { cn } from "./lib/utils";
 import { motion } from "motion/react";
 import { PermissionGuard } from "./components/PermissionGuard";
@@ -25,7 +27,10 @@ import { TabKey, UserPermissions, DEFAULT_ROLE_PERMISSIONS, UserRole } from "./t
 interface SidebarProps {
   role: string;
   userEmail?: string;
+  displayName?: string;
+  photoURL?: string;
   userPermissions?: UserPermissions;
+  onOpenProfile: () => void;
 }
 
 interface NavItem {
@@ -35,7 +40,7 @@ interface NavItem {
   tabKey: TabKey;
 }
 
-function Sidebar({ role, userEmail, userPermissions }: SidebarProps) {
+function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, onOpenProfile }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem("sidebar_collapsed") === "true");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -106,120 +111,231 @@ function Sidebar({ role, userEmail, userPermissions }: SidebarProps) {
     return effectivePerms[item.tabKey]?.view === true;
   });
 
+  const userInitials = (displayName || userEmail || "U")
+    .split(" ")
+    .map(n => n[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+
   const sidebarContent = (
-    <div className={cn("p-6 flex-1 flex flex-col min-h-0", isCollapsed && "px-3 py-6")}>
-      <div className={cn("flex items-center mb-8", isCollapsed ? "justify-center" : "justify-between")}>
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white shrink-0">MT</div>
-          {(!isCollapsed || isMobileOpen) && <span className="text-white font-semibold text-lg tracking-tight truncate">MTKN ITSM</span>}
-        </div>
-        <div className="flex items-center gap-1">
-          {!isCollapsed && (
-            <button 
-              onClick={toggleCollapse}
-              className="hidden md:flex text-slate-400 hover:text-white min-w-[44px] min-h-[44px] rounded-lg hover:bg-slate-800 transition-colors items-center justify-center"
-              title="Collapse sidebar"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
-          {isMobileOpen && (
-            <button 
-              onClick={() => setIsMobileOpen(false)}
-              className="md:hidden text-slate-400 hover:text-white min-w-[44px] min-h-[44px] rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center"
-              title="Close menu"
-            >
-              <CloseIcon className="w-5 h-5" />
-            </button>
+    <div className={cn("flex-1 flex flex-col min-h-0", isCollapsed && !isMobileOpen ? "p-3 py-5" : "p-6")}>
+      {/* Header / Brand */}
+      <div className={cn("flex items-center mb-6 shrink-0", isCollapsed && !isMobileOpen ? "flex-col gap-3 justify-center" : "justify-between")}>
+        <div className={cn("flex items-center gap-3 min-w-0", isCollapsed && !isMobileOpen && "justify-center")}>
+          <button
+            onClick={isCollapsed && !isMobileOpen ? toggleCollapse : undefined}
+            className={cn(
+              "w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white shrink-0 shadow-md shadow-blue-500/20 transition-transform active:scale-95",
+              isCollapsed && !isMobileOpen && "cursor-pointer hover:bg-blue-500"
+            )}
+            title={isCollapsed && !isMobileOpen ? "Click to expand sidebar" : "MTKN ITSM"}
+          >
+            MT
+          </button>
+          {(!isCollapsed || isMobileOpen) && (
+            <span className="text-white font-bold text-lg tracking-tight truncate">
+              MTKN ITSM
+            </span>
           )}
         </div>
+
+        {/* Toggle Collapse Buttons */}
+        {!isCollapsed && !isMobileOpen && (
+          <button 
+            onClick={toggleCollapse}
+            className="hidden md:flex text-slate-400 hover:text-white w-9 h-9 rounded-lg hover:bg-slate-800 transition-colors items-center justify-center cursor-pointer"
+            title="Collapse sidebar"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+
+        {isCollapsed && !isMobileOpen && (
+          <button 
+            onClick={toggleCollapse}
+            className="hidden md:flex text-slate-400 hover:text-white w-8 h-8 rounded-lg hover:bg-slate-800 transition-colors items-center justify-center bg-slate-800/50 cursor-pointer"
+            title="Expand sidebar"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
+
+        {isMobileOpen && (
+          <button 
+            onClick={() => setIsMobileOpen(false)}
+            className="md:hidden text-slate-400 hover:text-white w-9 h-9 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+            title="Close menu"
+          >
+            <CloseIcon className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
-      {isCollapsed && (
-        <button 
-          onClick={toggleCollapse}
-          className="hidden md:flex text-slate-400 hover:text-white min-w-[44px] min-h-[44px] rounded-lg hover:bg-slate-800 transition-colors mx-auto mb-6 items-center justify-center bg-slate-800/30"
-          title="Expand sidebar"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      )}
-
-      <nav className="space-y-1.5 flex-1 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700/60 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+      {/* Navigation Links with Floating Tooltips in Collapsed Mode */}
+      <nav className="space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navigation.map((item) => {
           const isActive = location.pathname === item.href;
           return (
-            <Link
-              key={item.name}
-              to={item.href}
-              onClick={() => setIsMobileOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-3.5 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px]",
-                isCollapsed && !isMobileOpen ? "justify-center px-2" : "",
-                isActive
-                  ? "bg-blue-600/10 text-blue-400 font-semibold"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
+            <div key={item.name} className="relative group">
+              <Link
+                to={item.href}
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "flex items-center transition-all min-h-[42px]",
+                  isCollapsed && !isMobileOpen 
+                    ? "w-11 h-11 mx-auto justify-center rounded-xl" 
+                    : "gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium",
+                  isActive
+                    ? isCollapsed && !isMobileOpen
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                      : "bg-blue-600/15 text-blue-400 font-semibold border border-blue-500/20"
+                    : "text-slate-400 hover:bg-slate-800/80 hover:text-white"
+                )}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                {(!isCollapsed || isMobileOpen) && <span className="truncate">{item.name}</span>}
+              </Link>
+
+              {/* Floating Tooltip for Collapsed Sidebar */}
+              {isCollapsed && !isMobileOpen && (
+                <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-950 text-white text-xs font-semibold rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 flex items-center gap-1.5">
+                  <span>{item.name}</span>
+                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                </div>
               )}
-              title={isCollapsed && !isMobileOpen ? item.name : undefined}
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              {(!isCollapsed || isMobileOpen) && <span className="truncate">{item.name}</span>}
-            </Link>
+            </div>
           );
         })}
 
+        {/* PWA Install Button */}
         {!isInstalled && (
-          <button
-            onClick={handleInstallClick}
-            className={cn(
-              "w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-sm font-semibold transition-all min-h-[44px] mt-4",
-              "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25 border border-emerald-500/30 shadow-sm cursor-pointer",
-              isCollapsed && !isMobileOpen ? "justify-center px-2" : ""
+          <div className="relative group pt-2">
+            <button
+              onClick={handleInstallClick}
+              className={cn(
+                "flex items-center transition-all min-h-[42px] cursor-pointer",
+                isCollapsed && !isMobileOpen
+                  ? "w-11 h-11 mx-auto justify-center rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30 shadow-sm"
+                  : "w-full gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25 border border-emerald-500/30 shadow-sm"
+              )}
+            >
+              <Download className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+              {(!isCollapsed || isMobileOpen) && <span className="truncate">Install App</span>}
+            </button>
+
+            {isCollapsed && !isMobileOpen && (
+              <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-950 text-emerald-300 text-xs font-semibold rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                Install Application (PWA)
+              </div>
             )}
-            title="Install Application"
-          >
-            <Download className="w-5 h-5 flex-shrink-0 text-emerald-400" />
-            {(!isCollapsed || isMobileOpen) && <span className="truncate">Install Application</span>}
-          </button>
+          </div>
         )}
       </nav>
 
-      <div className="mt-auto pt-4 space-y-4 shrink-0">
-        <div className={cn("bg-slate-800 rounded-xl p-3.5", isCollapsed && !isMobileOpen && "p-2 text-center")}>
-          {isCollapsed && !isMobileOpen ? (
-            <div className="flex flex-col items-center gap-2.5">
-              <div 
-                className="w-8 h-8 bg-blue-600/20 text-blue-400 rounded-full flex items-center justify-center font-bold text-xs uppercase"
-                title={`Role: ${role.replace('_', ' ').toUpperCase()}`}
+      {/* User Profile Section in Sidebar */}
+      <div className="mt-auto pt-3 shrink-0">
+        {isCollapsed && !isMobileOpen ? (
+          /* Collapsed User Controls */
+          <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-800">
+            {/* Avatar Button with Tooltip */}
+            <div className="relative group">
+              <button
+                onClick={() => onOpenProfile()}
+                className="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-white transition-all cursor-pointer relative"
               >
-                {role[0].toUpperCase()}
+                {photoURL ? (
+                  <img src={photoURL} alt="Profile" className="w-full h-full rounded-xl object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-full h-full rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-xs">
+                    {userInitials}
+                  </div>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-900" />
+              </button>
+
+              <div className="pointer-events-none absolute left-full bottom-0 ml-3 px-3 py-2 bg-slate-950 text-white text-xs rounded-xl shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                <p className="font-bold text-white">{displayName || userEmail || "My Profile"}</p>
+                <p className="text-[11px] text-blue-400 capitalize">{role.replace('_', ' ')} • Click to edit profile</p>
               </div>
+            </div>
+
+            {/* Logout Button with Tooltip */}
+            <div className="relative group">
               <button
                 onClick={() => signOut(auth)}
-                className="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center"
-                title={`Sign Out (${userEmail || 'System User'})`}
+                className="w-10 h-10 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors flex items-center justify-center cursor-pointer"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4" />
+              </button>
+
+              <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-950 text-rose-300 text-xs font-semibold rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                Sign Out
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Expanded User Controls */
+          <div className="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 space-y-2.5">
+            {/* Clickable Profile Card */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileOpen(false);
+                onOpenProfile();
+              }}
+              className="w-full flex items-center gap-3 text-left p-1.5 rounded-xl hover:bg-slate-700/60 transition-all cursor-pointer group"
+              title="Click to edit full name, upload avatar, and change password"
+            >
+              <div className="relative shrink-0">
+                <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-600 bg-slate-700 flex items-center justify-center text-white font-bold text-xs group-hover:border-blue-400 transition-colors">
+                  {photoURL ? (
+                    <img src={photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                      {userInitials}
+                    </div>
+                  )}
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-800" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+                  {displayName || userEmail?.split('@')[0] || "My Profile"}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider bg-blue-950/80 px-1.5 py-0.2 rounded border border-blue-800/60">
+                    {role.replace('_', ' ')}
+                  </span>
+                  <span className="text-[10px] text-slate-400 truncate font-mono">
+                    Edit Profile
+                  </span>
+                </div>
+              </div>
+
+              <Settings2 className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors shrink-0" />
+            </button>
+
+            {/* Sign out button */}
+            <div className="pt-2 border-t border-slate-700/50 flex items-center justify-between px-1">
+              <span className="text-[10px] text-slate-400 truncate max-w-[120px] font-mono">
+                {userEmail || 'user@mtknitsm.local'}
+              </span>
+              <button
+                onClick={() => signOut(auth)}
+                className="text-slate-400 hover:text-rose-400 text-[11px] font-semibold flex items-center gap-1 hover:bg-rose-500/10 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                title="Sign out of account"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Logout</span>
               </button>
             </div>
-          ) : (
-            <>
-              <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-2">Role: {role.replace('_', ' ').toUpperCase()}</p>
-              <button
-                onClick={() => signOut(auth)}
-                className="flex items-center justify-between w-full text-left min-h-[44px] py-1 px-1 rounded-lg hover:bg-slate-700/50 transition-colors"
-              >
-               <div className="overflow-hidden pr-2">
-                  <p className="text-xs text-white font-medium truncate">{userEmail || 'System User'}</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Sign Out</p>
-               </div>
-               <LogOut className="w-4 h-4 text-slate-400 flex-shrink-0" />
-              </button>
-            </>
-          )}
-        </div>
+          </div>
+        )}
+
         {(!isCollapsed || isMobileOpen) && (
-          <div className="text-[10px] text-slate-500 text-center font-mono tracking-wider pt-2 border-t border-slate-800/50">
+          <div className="text-[10px] text-slate-500 text-center font-mono tracking-wider pt-2">
             Developed by <span className="text-slate-400 font-sans font-medium">Saw Pyae Phyo Kyaw</span>
           </div>
         )}
@@ -232,22 +348,41 @@ function Sidebar({ role, userEmail, userPermissions }: SidebarProps) {
       {/* Mobile Header Bar */}
       <div className="md:hidden bg-slate-900 border-b border-slate-800 px-4 h-14 flex items-center justify-between shrink-0 text-white z-20">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-blue-600 rounded flex items-center justify-center font-bold text-xs">MT</div>
+          <div className="w-7 h-7 bg-blue-600 rounded flex items-center justify-center font-bold text-xs shadow-sm">MT</div>
           <span className="font-semibold text-sm tracking-tight">MTKN ITSM</span>
         </div>
-        <button
-          onClick={() => setIsMobileOpen(true)}
-          className="text-slate-300 hover:text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-slate-800 transition-colors"
-          title="Open Navigation Menu"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
+        
+        <div className="flex items-center gap-2">
+          {/* Mobile Profile Trigger Button */}
+          <button
+            onClick={onOpenProfile}
+            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-full border border-slate-700 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
+            title="Open User Profile"
+          >
+            <div className="w-6 h-6 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-[10px] font-bold">
+              {photoURL ? (
+                <img src={photoURL} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                userInitials
+              )}
+            </div>
+            <span className="max-w-[80px] truncate font-medium text-[11px]">{displayName || "Profile"}</span>
+          </button>
+
+          <button
+            onClick={() => setIsMobileOpen(true)}
+            className="text-slate-300 hover:text-white p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Open Navigation Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
       <aside className={cn(
-        "hidden md:flex bg-slate-900 flex-col border-r border-slate-800 transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
-        isCollapsed ? "w-16" : "w-60"
+        "hidden md:flex bg-slate-900 flex-col border-r border-slate-800 transition-all duration-300 ease-in-out shrink-0 overflow-visible relative z-30",
+        isCollapsed ? "w-20" : "w-64"
       )}>
         {sidebarContent}
       </aside>
@@ -271,7 +406,10 @@ function Sidebar({ role, userEmail, userPermissions }: SidebarProps) {
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("staff");
+  const [userDisplayName, setUserDisplayName] = useState<string>("");
+  const [userPhotoURL, setUserPhotoURL] = useState<string>("");
   const [userPermissions, setUserPermissions] = useState<UserPermissions | undefined>(undefined);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -293,6 +431,15 @@ export default function App() {
     }
   };
 
+  const handleProfileUpdated = (updatedData: { displayName: string; photoURL?: string }) => {
+    if (updatedData.displayName) {
+      setUserDisplayName(updatedData.displayName);
+    }
+    if (updatedData.photoURL !== undefined) {
+      setUserPhotoURL(updatedData.photoURL);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       if (u) {
@@ -301,13 +448,17 @@ export default function App() {
           const userSnap = await getDoc(userRef);
           let activeRole: UserRole = "staff";
           let activePermissions: UserPermissions = DEFAULT_ROLE_PERMISSIONS.staff;
+          let activeDisplayName = u.displayName || "";
+          let activePhotoURL = u.photoURL || "";
           
           if (!userSnap.exists()) {
             const initialRole: UserRole = "admin";
             const initialPerms = DEFAULT_ROLE_PERMISSIONS.admin;
             await setDoc(userRef, {
               email: u.email,
-              displayName: u.displayName || "",
+              displayName: activeDisplayName,
+              fullName: activeDisplayName,
+              photoURL: activePhotoURL || null,
               role: initialRole,
               permissions: initialPerms,
               status: "active",
@@ -320,21 +471,30 @@ export default function App() {
             const data = userSnap.data();
             activeRole = (data?.role || "staff") as UserRole;
             activePermissions = data?.permissions || DEFAULT_ROLE_PERMISSIONS[activeRole] || DEFAULT_ROLE_PERMISSIONS.staff;
+            if (data?.displayName) activeDisplayName = data.displayName;
+            if (data?.fullName && !activeDisplayName) activeDisplayName = data.fullName;
+            if (data?.photoURL) activePhotoURL = data.photoURL;
           }
           
           setUserRole(activeRole);
           setUserPermissions(activePermissions);
+          setUserDisplayName(activeDisplayName);
+          setUserPhotoURL(activePhotoURL);
           setUser(u);
         } catch (err) {
           console.error("Error retrieving user document:", err);
           setUser(u);
           setUserRole("staff");
           setUserPermissions(DEFAULT_ROLE_PERMISSIONS.staff);
+          setUserDisplayName(u.displayName || "");
+          setUserPhotoURL(u.photoURL || "");
         }
       } else {
         setUser(null);
         setUserRole("staff");
         setUserPermissions(undefined);
+        setUserDisplayName("");
+        setUserPhotoURL("");
       }
       setLoading(false);
     });
@@ -410,7 +570,14 @@ export default function App() {
   return (
     <Router>
       <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
-        <Sidebar role={userRole} userEmail={user?.email} userPermissions={userPermissions} />
+        <Sidebar 
+          role={userRole} 
+          userEmail={user?.email} 
+          displayName={userDisplayName}
+          photoURL={userPhotoURL}
+          userPermissions={userPermissions}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
+        />
         <main className="flex-1 flex flex-col overflow-y-auto">
           <Routes>
             <Route 
@@ -488,7 +655,18 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+
+        {/* User Profile Modal */}
+        <UserProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          currentUser={user}
+          userRole={userRole}
+          userPermissions={userPermissions}
+          onProfileUpdated={handleProfileUpdated}
+        />
       </div>
     </Router>
   );
 }
+

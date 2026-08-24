@@ -21,7 +21,13 @@ service cloud.firestore {
     function isValidUser(data) {
       return (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 200)) &&
              (!('username' in data) || (data.username is string && data.username.size() <= 100)) &&
+             (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 200)) &&
+             (!('fullName' in data) || data.fullName == null || (data.fullName is string && data.fullName.size() <= 200)) &&
+             (!('photoURL' in data) || data.photoURL == null || data.photoURL is string) &&
+             (!('phone' in data) || data.phone == null || (data.phone is string && data.phone.size() <= 50)) &&
+             (!('department' in data) || data.department == null || (data.department is string && data.department.size() <= 100)) &&
              (!('password' in data) || data.password is string) &&
+             (!('lastPasswordChange' in data) || data.lastPasswordChange is string || data.lastPasswordChange == null) &&
              (!('permissions' in data) || data.permissions is map) &&
              data.role is string && data.role in ['admin', 'management', 'it_assistant', 'staff'] &&
              data.status is string && data.status in ['active', 'disabled'] &&
@@ -130,7 +136,7 @@ service cloud.firestore {
       allow create: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && incoming().updatedAt == request.time && (
         isAdmin() ||
-        (userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']))
+        (userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'fullName', 'photoURL', 'phone', 'department', 'lastPasswordChange', 'updatedAt']))
       );
       allow delete: if isAdmin();
     }

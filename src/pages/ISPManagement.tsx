@@ -5,6 +5,14 @@ import { Plus, X, Globe, Activity, Users, MapPin, Clock, Search } from "lucide-r
 import { format } from "date-fns";
 import { ISPAccount, DowntimeRecord, OperationType, User, UserPermissions } from "../types";
 import { sendEmailAlert } from "../lib/emailService";
+import { 
+  saveIspLocal, 
+  getIspLocal, 
+  saveUsersLocal, 
+  getUsersLocal, 
+  addPendingSyncAction 
+} from "../lib/offlineStorage";
+import { SyncStatusBadge } from "../components/SyncStatusBadge";
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   console.error(`Firestore Error [${operationType}] on ${path}:`, error);
@@ -34,6 +42,13 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
 
   const fetchAccounts = async () => {
     try {
+      if (!navigator.onLine) {
+        const cached = await getIspLocal();
+        if (cached.length > 0) {
+          setIspAccounts(cached);
+        }
+        return;
+      }
       const snap = await getDocs(query(collection(db, "isp_accounts")));
       const docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       // Sort by status severity then name
@@ -45,8 +60,13 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
         return a.ispName.localeCompare(b.ispName);
       });
       setIspAccounts(docs as ISPAccount[]);
+      await saveIspLocal(docs as ISPAccount[]);
     } catch (e) {
       console.error(e);
+      const cached = await getIspLocal();
+      if (cached.length > 0) {
+        setIspAccounts(cached);
+      }
     } finally {
       setLoading(false);
     }
@@ -54,10 +74,23 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
 
   const fetchUsers = async () => {
     try {
+      if (!navigator.onLine) {
+        const cached = await getUsersLocal();
+        if (cached.length > 0) {
+          setAllUsers(cached);
+        }
+        return;
+      }
       const snap = await getDocs(query(collection(db, "users")));
-      setAllUsers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+      const fetched = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setAllUsers(fetched);
+      await saveUsersLocal(fetched);
     } catch (e) {
       console.error(e);
+      const cached = await getUsersLocal();
+      if (cached.length > 0) {
+        setAllUsers(cached);
+      }
     }
   };
 
@@ -83,34 +116,69 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
           return;
         }
 
+        if (!navigator.onLine) {
+          const updated = ispAccounts.map(a => a.id === editingId ? { ...a, ...newAccount, updatedAt: new Date().toISOString() } : a);
+          setIspAccounts(updated);
+          await saveIspLocal(updated);
+          await addPendingSyncAction('UPDATE_ISP', { id: editingId, updates: newAccount });
+          setShowModal(false);
+          setEditingId(null);
+          setNewAccount({ ispName: '', branchOffice: '', speed: '', userIdDeviceId: '', contactName: '', currentStatus: 'online' });
+          alert("ISP details updated locally in IndexedDB!");
+          return;
+        }
+
         await updateDoc(doc(db, "isp_accounts", editingId), {
           ...newAccount,
           updatedAt: serverTimestamp()
         });
       } else {
-        await addDoc(collection(db, "isp_accounts"), {
+        const createPayload = {
           ...newAccount,
           downtimeRecords: [],
-          authorId: auth.currentUser?.uid,
-          authorRole: userRole,
+          authorId: auth.currentUser?.uid || '',
+          authorRole: userRole
+        };
+
+        if (!navigator.onLine) {
+          const localAcc: ISPAccount = {
+            id: `local_isp_${Date.now()}`,
+            ...createPayload,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          const updated = [localAcc, ...ispAccounts];
+          setIspAccounts(updated);
+          await saveIspLocal(updated);
+          await addPendingSyncAction('CREATE_ISP', createPayload);
+          setShowModal(false);
+          setNewAccount({ ispName: '', branchOffice: '', speed: '', userIdDeviceId: '', contactName: '', currentStatus: 'online' });
+          alert("ISP account saved locally in IndexedDB!");
+          return;
+        }
+
+        await addDoc(collection(db, "isp_accounts"), {
+          ...createPayload,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
       }
 
       // Automatically trigger email alerts for outage and update logs
-      if (newAccount.currentStatus === 'offline') {
-        await sendEmailAlert(
-          `🛑 ISP OFFLINE: ${newAccount.ispName} (${newAccount.branchOffice})`,
-          `The connection for ${newAccount.ispName} at the ${newAccount.branchOffice} branch office has been reported as OFFLINE.\n\nConnection Details:\n- ISP Name: ${newAccount.ispName}\n- Branch Office: ${newAccount.branchOffice}\n- Speed/Type: ${newAccount.speed}\n- Connection ID: ${newAccount.userIdDeviceId}\n- Technical Contact: ${newAccount.contactName}\n\nPlease check router power and contact ISP support if necessary.`,
-          'isp_down'
-        );
-      } else {
-        await sendEmailAlert(
-          `📝 ISP Profile Updated: ${newAccount.ispName} (${newAccount.branchOffice})`,
-          `The connection profile or operational status for ${newAccount.ispName} at ${newAccount.branchOffice} has been updated.\n\nNew Details:\n- Status: ${newAccount.currentStatus.toUpperCase()}\n- Speed/Type: ${newAccount.speed}\n- Connection ID: ${newAccount.userIdDeviceId}\n- Contact: ${newAccount.contactName}`,
-          'log_update'
-        );
+      if (navigator.onLine) {
+        if (newAccount.currentStatus === 'offline') {
+          await sendEmailAlert(
+            `🛑 ISP OFFLINE: ${newAccount.ispName} (${newAccount.branchOffice})`,
+            `The connection for ${newAccount.ispName} at the ${newAccount.branchOffice} branch office has been reported as OFFLINE.\n\nConnection Details:\n- ISP Name: ${newAccount.ispName}\n- Branch Office: ${newAccount.branchOffice}\n- Speed/Type: ${newAccount.speed}\n- Connection ID: ${newAccount.userIdDeviceId}\n- Technical Contact: ${newAccount.contactName}\n\nPlease check router power and contact ISP support if necessary.`,
+            'isp_down'
+          );
+        } else {
+          await sendEmailAlert(
+            `📝 ISP Profile Updated: ${newAccount.ispName} (${newAccount.branchOffice})`,
+            `The connection profile or operational status for ${newAccount.ispName} at ${newAccount.branchOffice} has been updated.\n\nNew Details:\n- Status: ${newAccount.currentStatus.toUpperCase()}\n- Speed/Type: ${newAccount.speed}\n- Connection ID: ${newAccount.userIdDeviceId}\n- Contact: ${newAccount.contactName}`,
+            'log_update'
+          );
+        }
       }
 
       setShowModal(false);
@@ -172,6 +240,18 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
           const maxSev = statusSeverity[max] || 0;
           return rSev > maxSev ? r.status : max;
         }, 'maintenance');
+      }
+
+      if (!navigator.onLine) {
+        const updated = ispAccounts.map(a => a.id === showDowntimeModal ? { ...a, downtimeRecords: records, currentStatus: finalStatus, updatedAt: new Date().toISOString() } : a);
+        setIspAccounts(updated);
+        await saveIspLocal(updated);
+        await addPendingSyncAction('UPDATE_ISP', { id: showDowntimeModal, updates: { downtimeRecords: records, currentStatus: finalStatus } });
+        setShowDowntimeModal(null);
+        setEditingDowntimeIndex(null);
+        setNewDowntime({ date: '', duration: '', reason: '', currentStatus: 'offline', resolvedAt: '', status: 'offline' });
+        alert("Downtime record saved locally in IndexedDB!");
+        return;
       }
 
       await updateDoc(doc(db, "isp_accounts", showDowntimeModal), {
@@ -238,6 +318,15 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
         }, 'maintenance');
       }
 
+      if (!navigator.onLine) {
+        const updated = ispAccounts.map(a => a.id === accountId ? { ...a, downtimeRecords: records, currentStatus: finalStatus, updatedAt: new Date().toISOString() } : a);
+        setIspAccounts(updated);
+        await saveIspLocal(updated);
+        await addPendingSyncAction('UPDATE_ISP', { id: accountId, updates: { downtimeRecords: records, currentStatus: finalStatus } });
+        alert("Downtime marked as resolved locally in IndexedDB!");
+        return;
+      }
+
       await updateDoc(doc(db, "isp_accounts", accountId), {
         downtimeRecords: records,
         currentStatus: finalStatus,
@@ -264,12 +353,13 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
       return;
     }
 
-    const dt = account.downtimeRecords[index];
+    const dt = account?.downtimeRecords[index];
+    if (!dt) return;
     setNewDowntime({
       date: dt.date,
       duration: dt.duration || '',
       reason: dt.reason || '',
-      currentStatus: account.currentStatus || 'offline',
+      currentStatus: account?.currentStatus || 'offline',
       resolvedAt: dt.resolvedAt || ''
     });
     setEditingDowntimeIndex(index);
@@ -289,6 +379,16 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
     }
 
     if (!window.confirm("Are you sure you want to delete this ISP connection?")) return;
+
+    if (!navigator.onLine) {
+      const updated = ispAccounts.filter(a => a.id !== id);
+      setIspAccounts(updated);
+      await saveIspLocal(updated);
+      await addPendingSyncAction('DELETE_ISP', { id });
+      alert("ISP account deleted locally in IndexedDB!");
+      return;
+    }
+
     try {
       await deleteDoc(doc(db, "isp_accounts", id));
       fetchAccounts();
@@ -324,6 +424,15 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
           const maxSev = statusSeverity[max] || 0;
           return rSev > maxSev ? r.status : max;
         }, 'maintenance');
+      }
+
+      if (!navigator.onLine) {
+        const updated = ispAccounts.map(a => a.id === accountId ? { ...a, downtimeRecords: records, currentStatus: finalStatus, updatedAt: new Date().toISOString() } : a);
+        setIspAccounts(updated);
+        await saveIspLocal(updated);
+        await addPendingSyncAction('UPDATE_ISP', { id: accountId, updates: { downtimeRecords: records, currentStatus: finalStatus } });
+        alert("Downtime record deleted locally in IndexedDB!");
+        return;
       }
 
       await updateDoc(doc(db, "isp_accounts", accountId), {
@@ -369,8 +478,11 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
     <div className="p-4 sm:p-6 lg:p-8 overflow-y-auto flex-1">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">ISP Management</h1>
-          <p className="text-slate-500 text-sm mt-1">Track branch ISPs, speeds, and downtime</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5 flex-wrap">
+            <span>ISP Management</span>
+            <SyncStatusBadge onSynced={fetchAccounts} />
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">Track branch ISPs, speeds, and downtime with local-first offline sync</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative">
