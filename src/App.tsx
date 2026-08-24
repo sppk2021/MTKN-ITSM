@@ -464,7 +464,13 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
       {/* Mobile Header Bar */}
       <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-14 flex items-center justify-between shrink-0 text-slate-900 dark:text-white z-20">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-blue-600 rounded flex items-center justify-center font-bold text-xs shadow-sm">MT</div>
+          <div className={cn("w-7 h-7 rounded flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden", !appLogo && "bg-blue-600 text-white")}>
+            {appLogo ? (
+              <img src={appLogo} alt="Logo" className="w-full h-full object-cover" />
+            ) : (
+              "MT"
+            )}
+          </div>
           <span className="font-semibold text-sm tracking-tight">MTKN ITSM</span>
         </div>
         
