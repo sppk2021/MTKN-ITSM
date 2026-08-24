@@ -3,7 +3,7 @@ import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, de
 import { auth, db } from "../lib/firebase";
 import { Plus, X, Globe, Activity, Users, MapPin, Clock, Search } from "lucide-react";
 import { format } from "date-fns";
-import { ISPAccount, DowntimeRecord, OperationType, User } from "../types";
+import { ISPAccount, DowntimeRecord, OperationType, User, UserPermissions } from "../types";
 import { sendEmailAlert } from "../lib/emailService";
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
@@ -13,9 +13,13 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 interface ISPManagementProps {
   userRole?: string;
+  userPermissions?: UserPermissions;
 }
 
-export default function ISPManagement({ userRole = 'staff' }: ISPManagementProps) {
+export default function ISPManagement({ userRole = 'staff', userPermissions }: ISPManagementProps) {
+  const canEdit = userRole === 'admin' || (userPermissions?.isp?.edit ?? (userRole !== 'management' && userRole !== 'staff'));
+  const canDelete = userRole === 'admin' || (userPermissions?.isp?.delete ?? false);
+
   const [ispAccounts, setIspAccounts] = useState<ISPAccount[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -273,8 +277,8 @@ export default function ISPManagement({ userRole = 'staff' }: ISPManagementProps
   };
 
   const deleteAccount = async (id: string) => {
-    if (userRole === 'it_assistant') {
-      alert("Permission Denied: IT Assistants are not allowed to delete ISP accounts.");
+    if (!canDelete) {
+      alert("Permission Denied: You do not have permission to delete ISP accounts.");
       return;
     }
 
@@ -294,6 +298,11 @@ export default function ISPManagement({ userRole = 'staff' }: ISPManagementProps
   };
 
   const deleteDowntime = async (accountId: string, index: number) => {
+    if (!canDelete) {
+      alert("Permission Denied: You do not have permission to delete downtime records.");
+      return;
+    }
+
     const account = ispAccounts.find(a => a.id === accountId);
     if (userRole === 'it_assistant' && account && isAdminAddedData(account)) {
       alert("Permission Denied: IT Assistants are not allowed to modify admin-created ISP accounts.");
@@ -357,7 +366,7 @@ export default function ISPManagement({ userRole = 'staff' }: ISPManagementProps
   if (loading) return <div className="p-8 text-slate-500">Loading ISP accounts...</div>;
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8 overflow-y-auto flex-1">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">ISP Management</h1>
@@ -547,9 +556,18 @@ export default function ISPManagement({ userRole = 'staff' }: ISPManagementProps
                   <input type="text" value={newAccount.contactName} onChange={e => setNewAccount({...newAccount, contactName: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Name & Phone" />
                 </div>
               </div>
-              <div className="mt-6 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors">Save</button>
+              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setNewAccount({ ispName: '', branchOffice: '', speed: '', userIdDeviceId: '', contactName: '', currentStatus: 'online' })}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                >
+                  Clear Form
+                </button>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors cursor-pointer">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors cursor-pointer">Save</button>
+                </div>
               </div>
             </form>
           </div>
@@ -614,21 +632,30 @@ export default function ISPManagement({ userRole = 'staff' }: ISPManagementProps
                   <textarea required value={newDowntime.reason} onChange={e => setNewDowntime({...newDowntime, reason: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500" rows={2} placeholder="Brief description of the outage..."></textarea>
                 </div>
               </div>
-              <div className="mt-6 flex justify-end gap-3">
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setShowDowntimeModal(null);
-                    setEditingDowntimeIndex(null);
-                    setNewDowntime({ date: '', duration: '', reason: '', currentStatus: 'offline', resolvedAt: '' });
-                  }} 
-                  className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors"
+              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setNewDowntime({ date: '', duration: '', reason: '', currentStatus: 'offline', resolvedAt: '' })}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
                 >
-                  Cancel
+                  Clear Form
                 </button>
-                <button type="submit" className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-red-700 transition-colors">
-                  {editingDowntimeIndex !== null ? 'Update Log' : 'Log It'}
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowDowntimeModal(null);
+                      setEditingDowntimeIndex(null);
+                      setNewDowntime({ date: '', duration: '', reason: '', currentStatus: 'offline', resolvedAt: '' });
+                    }} 
+                    className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-red-700 transition-colors cursor-pointer">
+                    {editingDowntimeIndex !== null ? 'Update Log' : 'Log It'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

@@ -9,6 +9,8 @@
         "displayName": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "management", "it_assistant", "staff"] },
         "status": { "type": "string", "enum": ["active", "disabled"] },
+        "permissions": { "type": "object" },
+        "password": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },

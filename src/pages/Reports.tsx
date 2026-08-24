@@ -20,6 +20,8 @@ import {
   saveAlertRecipients 
 } from "../lib/emailService";
 
+import { UserPermissions } from "../types";
+
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 const PRIORITY_COLORS: Record<string, string> = {
   critical: '#ef4444',
@@ -29,7 +31,12 @@ const PRIORITY_COLORS: Record<string, string> = {
   unassigned: '#64748b'
 };
 
-export default function Reports() {
+interface ReportsProps {
+  userRole?: string;
+  userPermissions?: UserPermissions;
+}
+
+export default function Reports({ userRole = 'staff', userPermissions }: ReportsProps = {}) {
   const [tickets, setTickets] = useState<any[]>([]);
   const [repairs, setRepairs] = useState<any[]>([]);
   const [isps, setIsps] = useState<any[]>([]);
@@ -202,7 +209,7 @@ export default function Reports() {
           status: "in_progress",
           priority: "high",
           supportType: "network",
-          ticketCode: "TK-4821",
+          ticketCode: "TK-0001",
           requestDept: "Marketing",
           requestUsername: "sarah.m",
           authorId: currentUserId,
@@ -218,7 +225,7 @@ export default function Reports() {
           status: "resolved",
           priority: "low",
           supportType: "account",
-          ticketCode: "TK-1052",
+          ticketCode: "TK-0002",
           requestDept: "HR",
           requestUsername: "david.k",
           authorId: currentUserId,
@@ -234,7 +241,7 @@ export default function Reports() {
           status: "open",
           priority: "critical",
           supportType: "hardware",
-          ticketCode: "TK-9923",
+          ticketCode: "TK-0003",
           requestDept: "Finance",
           requestUsername: "elizabeth.c",
           authorId: currentUserId,
@@ -250,7 +257,7 @@ export default function Reports() {
           status: "open",
           priority: "medium",
           supportType: "hardware",
-          ticketCode: "TK-2345",
+          ticketCode: "TK-0004",
           requestDept: "Executive",
           requestUsername: "john.d",
           authorId: currentUserId,
@@ -270,7 +277,7 @@ export default function Reports() {
       const sampleRepairs = [
         {
           title: "Replace workstation PSU",
-          repairCode: "RP-8831",
+          repairCode: "RP-0001",
           device: "Dell OptiPlex 7090 Workstation",
           status: "completed",
           shopCenterName: "Internal Lab",
@@ -283,7 +290,7 @@ export default function Reports() {
         },
         {
           title: "Keyboard & Battery Replacement",
-          repairCode: "RP-1249",
+          repairCode: "RP-0002",
           device: "MacBook Pro 16\" (2021)",
           status: "ongoing",
           shopCenterName: "Apple Authorized Repair",
@@ -543,7 +550,7 @@ export default function Reports() {
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 print:hidden">
+      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0 print:hidden">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -551,26 +558,26 @@ export default function Reports() {
           </h1>
           <p className="text-xs text-slate-500">Comprehensive IT operation analytics, KPI metrics, and exports</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {tickets.length === 0 && repairs.length === 0 && isps.length === 0 && (
             <button 
               onClick={seedSampleData} 
               disabled={seeding}
-              className="px-3 py-1.5 text-xs font-bold bg-emerald-600 text-white rounded-lg shadow-sm hover:bg-emerald-700 flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+              className="px-3 py-2 text-xs font-bold bg-emerald-600 text-white rounded-lg shadow-sm hover:bg-emerald-700 flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer min-h-[44px]"
             >
               <Send className="w-4 h-4" /> {seeding ? "Seeding..." : "Seed Operational Data"}
             </button>
           )}
-          <button onClick={exportCSV} className="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm hover:bg-slate-50 flex items-center gap-2 transition-colors">
+          <button onClick={exportCSV} className="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm hover:bg-slate-50 flex items-center gap-2 transition-colors min-h-[44px]">
             <Download className="w-4 h-4" /> Export CSV ({activeTab.toUpperCase()})
           </button>
-          <button onClick={printPDF} className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 flex items-center gap-2 transition-colors">
+          <button onClick={printPDF} className="px-3 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 flex items-center gap-2 transition-colors min-h-[44px]">
              <FileText className="w-4 h-4" /> Print to PDF
           </button>
         </div>
       </header>
 
-      <div className="flex-1 p-8 overflow-y-auto space-y-8 bg-slate-50/50">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8 bg-slate-50/50">
         {loading ? (
           <div className="flex items-center justify-center h-64 text-slate-500 font-medium">
             <Clock className="w-5 h-5 animate-spin mr-2" /> Loading reports and calculating analytics...

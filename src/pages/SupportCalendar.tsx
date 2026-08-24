@@ -3,13 +3,17 @@ import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, de
 import { auth, db } from "../lib/firebase";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { User } from "../types";
+import { User, UserPermissions } from "../types";
 
 interface SupportCalendarProps {
   userRole?: string;
+  userPermissions?: UserPermissions;
 }
 
-export default function SupportCalendar({ userRole = 'staff' }: SupportCalendarProps) {
+export default function SupportCalendar({ userRole = 'staff', userPermissions }: SupportCalendarProps) {
+  const canEdit = userRole === 'admin' || (userPermissions?.calendar?.edit ?? (userRole !== 'management' && userRole !== 'staff'));
+  const canDelete = userRole === 'admin' || (userPermissions?.calendar?.delete ?? false);
+
   const [events, setEvents] = useState<any[]>([]);
   const [assistants, setAssistants] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -77,6 +81,11 @@ export default function SupportCalendar({ userRole = 'staff' }: SupportCalendarP
   };
 
   const toggleStatus = async (id: string, current: string) => {
+    if (!canEdit) {
+      alert("Permission Denied: You do not have permission to update calendar events.");
+      return;
+    }
+
     const evt = events.find(e => e.id === id);
     if (userRole === 'it_assistant' && evt && isAdminAddedData(evt)) {
       alert("Permission Denied: IT Assistants are not allowed to update admin-created calendar events.");
@@ -93,8 +102,8 @@ export default function SupportCalendar({ userRole = 'staff' }: SupportCalendarP
   };
 
   const deleteEvent = async (id: string) => {
-    if (userRole === 'it_assistant') {
-      alert("Permission Denied: IT Assistants are not allowed to delete calendar events.");
+    if (!canDelete) {
+      alert("Permission Denied: You do not have permission to delete calendar events.");
       return;
     }
 
@@ -118,20 +127,20 @@ export default function SupportCalendar({ userRole = 'staff' }: SupportCalendarP
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">IT Support Calendar</h1>
           <p className="text-xs text-slate-500">Manage and schedule tasks</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded shadow-sm hover:bg-blue-700 transition-colors"
+          className="w-full sm:w-auto px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors cursor-pointer min-h-[44px]"
         >
           Create Event
         </button>
       </header>
 
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col mb-8">
            <div className="p-5 border-b border-slate-100">
              <h2 className="text-sm font-bold text-slate-800 uppercase">Upcoming Schedule (List View)</h2>
@@ -242,9 +251,18 @@ export default function SupportCalendar({ userRole = 'staff' }: SupportCalendarP
                   {assistants.map(a => <option key={a.id} value={a.id}>{a.displayName || a.username || a.email}</option>)}
                 </select>
               </div>
-              <div className="flex justify-end space-x-2 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">Cancel</button>
-                <button type="submit" className="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold shadow-sm hover:bg-blue-700 transition-colors">Save Event</button>
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setNewEvent({ title: '', description: '', startTime: '', endTime: '', dueDate: '', location: '', assigneeId: '', status: 'scheduled', eventType: 'standard' })}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                >
+                  Clear Form
+                </button>
+                <div className="flex space-x-2">
+                  <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">Cancel</button>
+                  <button type="submit" className="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold shadow-sm hover:bg-blue-700 transition-colors cursor-pointer">Save Event</button>
+                </div>
               </div>
             </form>
           </div>

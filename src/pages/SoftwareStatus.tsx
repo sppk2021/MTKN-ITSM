@@ -3,13 +3,17 @@ import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, de
 import { auth, db } from "../lib/firebase";
 import { format, differenceInDays } from "date-fns";
 import { Plus, X, Server, Globe2, Edit2, ShieldAlert, Key, Trash2 } from "lucide-react";
-import { LicenseStatus, OperationType, User } from "../types";
+import { LicenseStatus, OperationType, User, UserPermissions } from "../types";
 
 interface SoftwareStatusProps {
   userRole?: string;
+  userPermissions?: UserPermissions;
 }
 
-export default function SoftwareStatus({ userRole = 'staff' }: SoftwareStatusProps) {
+export default function SoftwareStatus({ userRole = 'staff', userPermissions }: SoftwareStatusProps) {
+  const canEdit = userRole === 'admin' || (userPermissions?.software?.edit ?? (userRole !== 'management' && userRole !== 'staff'));
+  const canDelete = userRole === 'admin' || (userPermissions?.software?.delete ?? false);
+
   const [licenses, setLicenses] = useState<LicenseStatus[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +96,11 @@ export default function SoftwareStatus({ userRole = 'staff' }: SoftwareStatusPro
   };
 
   const openEdit = (license: any) => {
+    if (!canEdit) {
+      alert("Permission Denied: You do not have permission to edit software licenses.");
+      return;
+    }
+
     if (userRole === 'it_assistant' && isAdminAddedData(license)) {
       alert("Permission Denied: IT Assistants are not allowed to edit admin-created software licenses.");
       return;
@@ -110,8 +119,8 @@ export default function SoftwareStatus({ userRole = 'staff' }: SoftwareStatusPro
   };
 
   const handleDelete = async (id: string) => {
-    if (userRole === 'it_assistant') {
-      alert("Permission Denied: IT Assistants are not allowed to delete software licenses.");
+    if (!canDelete) {
+      alert("Permission Denied: You do not have permission to delete software licenses.");
       return;
     }
 
@@ -144,7 +153,7 @@ export default function SoftwareStatus({ userRole = 'staff' }: SoftwareStatusPro
   if (loading) return <div className="p-8 text-slate-500">Loading licenses...</div>;
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8 overflow-y-auto flex-1">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Software & Domains</h1>
@@ -254,9 +263,18 @@ export default function SoftwareStatus({ userRole = 'staff' }: SoftwareStatusPro
                   <textarea value={newLicense.details} onChange={e => setNewLicense({...newLicense, details: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" rows={2}></textarea>
                 </div>
               </div>
-              <div className="mt-6 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors">Save</button>
+              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setNewLicense({ name: '', type: 'domain', expiryDate: '', notes: '', status: 'active', details: '' })}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                >
+                  Clear Form
+                </button>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors cursor-pointer">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors cursor-pointer">Save</button>
+                </div>
               </div>
             </form>
           </div>

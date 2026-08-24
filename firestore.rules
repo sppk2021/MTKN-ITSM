@@ -20,6 +20,9 @@ service cloud.firestore {
     // User validation
     function isValidUser(data) {
       return (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 200)) &&
+             (!('username' in data) || (data.username is string && data.username.size() <= 100)) &&
+             (!('password' in data) || data.password is string) &&
+             (!('permissions' in data) || data.permissions is map) &&
              data.role is string && data.role in ['admin', 'management', 'it_assistant', 'staff'] &&
              data.status is string && data.status in ['active', 'disabled'] &&
              data.keys().hasAll(['role', 'status', 'createdAt', 'updatedAt']);

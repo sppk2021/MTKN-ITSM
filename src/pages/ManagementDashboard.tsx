@@ -12,6 +12,7 @@ import {
   ScatterChart, Scatter, ZAxis, BarChart, Bar, Legend
 } from "recharts";
 import { format, differenceInDays } from "date-fns";
+import { UserPermissions } from "../types";
 
 const CATEGORIES = ['Hardware', 'Software', 'Network', 'Account', 'Other'];
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
@@ -125,7 +126,12 @@ const renderHeatmapCell = (props: any) => {
   );
 };
 
-export default function ManagementDashboard() {
+interface ManagementDashboardProps {
+  userRole?: string;
+  userPermissions?: UserPermissions;
+}
+
+export default function ManagementDashboard({ userRole: propUserRole = "staff", userPermissions }: ManagementDashboardProps = {}) {
   const [stats, setStats] = useState({
     openTickets: 0,
     criticalTickets: 0,
@@ -141,7 +147,7 @@ export default function ManagementDashboard() {
   const [unassignedCriticalTickets, setUnassignedCriticalTickets] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string>("staff");
+  const [userRole, setUserRole] = useState<string>(propUserRole);
 
   const [heatmapData, setHeatmapData] = useState<any[]>([]);
   const [categoryBreakdownData, setCategoryBreakdownData] = useState<any[]>([]);
@@ -310,7 +316,7 @@ export default function ManagementDashboard() {
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-600" />
@@ -320,7 +326,7 @@ export default function ManagementDashboard() {
         </div>
       </header>
 
-      <div className="flex-1 p-8 space-y-8 overflow-y-auto bg-slate-50/50">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto bg-slate-50/50">
         {loading ? (
           <div className="flex items-center justify-center h-64 text-slate-500 font-medium">
             <Clock className="w-5 h-5 animate-spin mr-2" /> Loading real-time metrics...

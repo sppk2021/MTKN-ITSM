@@ -3,13 +3,18 @@ import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, de
 import { auth, db } from "../lib/firebase";
 import { format } from "date-fns";
 import { Search, X } from "lucide-react";
-import { Repair, User, OperationType } from "../types";
+import { Repair, User, OperationType, UserPermissions } from "../types";
+import { generateNextRepairCode } from "../lib/idGenerator";
 
 interface RepairsTrackingProps {
   userRole?: string;
+  userPermissions?: UserPermissions;
 }
 
-export default function RepairsTracking({ userRole = 'staff' }: RepairsTrackingProps) {
+export default function RepairsTracking({ userRole = 'staff', userPermissions }: RepairsTrackingProps) {
+  const canEdit = userRole === 'admin' || (userPermissions?.repairs?.edit ?? (userRole !== 'management' && userRole !== 'staff'));
+  const canDelete = userRole === 'admin' || (userPermissions?.repairs?.delete ?? false);
+
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [assistants, setAssistants] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -19,6 +24,23 @@ export default function RepairsTracking({ userRole = 'staff' }: RepairsTrackingP
   const [showHistoryModal, setShowHistoryModal] = useState<string | null>(null);
   const [historyNote, setHistoryNote] = useState('');
   const [newRepair, setNewRepair] = useState<Omit<Repair, 'id' | 'repairCode' | 'history' | 'createdAt' | 'updatedAt'>>({ title: '', device: '', status: 'pending', mechanicId: 'unassigned' });
+
+  const resetNewRepair = () => {
+    setNewRepair({
+      title: '',
+      device: '',
+      reportedIssues: '',
+      shopCenterName: '',
+      status: 'pending',
+      mechanicId: assistants.length > 0 ? assistants[0].id : 'unassigned'
+    });
+  };
+
+  const clearAllFiltersAndInputs = () => {
+    setSearchQuery('');
+    resetNewRepair();
+    setHistoryNote('');
+  };
 
   const fetchRepairs = async () => {
     try {
@@ -57,7 +79,7 @@ export default function RepairsTracking({ userRole = 'staff' }: RepairsTrackingP
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const repairCode = `RP-${Math.floor(1000 + Math.random() * 9000)}`;
+    const repairCode = generateNextRepairCode(repairs);
     try {
       await addDoc(collection(db, "repairs"), {
         ...newRepair,
@@ -100,8 +122,8 @@ export default function RepairsTracking({ userRole = 'staff' }: RepairsTrackingP
   };
 
   const deleteRepair = async (id: string) => {
-    if (userRole === 'it_assistant') {
-      alert("Permission Denied: IT Assistants are not allowed to delete repairs.");
+    if (!canDelete) {
+      alert("Permission Denied: You do not have permission to delete repairs.");
       return;
     }
 
@@ -160,29 +182,50 @@ export default function RepairsTracking({ userRole = 'staff' }: RepairsTrackingP
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+      <header className="min-h-16 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Repairs Tracking</h1>
           <p className="text-xs text-slate-500">Log hardware and system repairs</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded shadow-sm hover:bg-blue-700 transition-colors"
+          className="w-full sm:w-auto px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors cursor-pointer min-h-[44px]"
         >
           New Repair Ticket
         </button>
       </header>
 
-      <div className="flex-1 p-8 overflow-y-auto">
-        <div className="mb-6 flex items-center relative max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3" />
-          <input
-            type="text"
-            placeholder="Search tickets, devices, or history..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition-shadow"
-          />
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex items-center relative max-w-md flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3" />
+            <input
+              type="text"
+              placeholder="Search tickets, devices, or history..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition-shadow"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={clearAllFiltersAndInputs}
+              className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+            >
+              Clear Filter
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -339,9 +382,18 @@ export default function RepairsTracking({ userRole = 'staff' }: RepairsTrackingP
                       ))}
                     </select>
                   </div>
-                <div className="flex justify-end space-x-2 pt-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">Cancel</button>
-                  <button type="submit" className="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold shadow-sm hover:bg-blue-700 transition-colors">Create Ticket</button>
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={resetNewRepair}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                  >
+                    Clear Form
+                  </button>
+                  <div className="flex space-x-2">
+                    <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">Cancel</button>
+                    <button type="submit" className="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold shadow-sm hover:bg-blue-700 transition-colors cursor-pointer">Create Ticket</button>
+                  </div>
                 </div>
               </form>
             </div>
