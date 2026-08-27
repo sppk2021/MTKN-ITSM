@@ -281,7 +281,14 @@ export default function SoftwareStatus({ userRole = 'staff', userPermissions }: 
                    <span className="text-slate-500 dark:text-slate-400">Expiry Date:</span>
                    <span className="font-medium text-slate-700 dark:text-slate-300">{format(new Date(lic.expiryDate), 'MMM dd, yyyy')}</span>
                  </div>
-                 <div className={`p-2 rounded text-xs font-bold text-center border ${urgencyClass}`}>
+                 <div 
+                   title={
+                     daysLeft < 0 ? 'License has expired and needs renewal' : 
+                     daysLeft <= 30 ? 'License will expire within the next 30 days' : 
+                     'License is valid and up to date'
+                   }
+                   className={`cursor-help p-2 rounded text-xs font-bold text-center border ${urgencyClass}`}
+                 >
                    {daysLeft < 0 ? `Expired ${Math.abs(daysLeft)} days ago` : `Expires in ${daysLeft} days`}
                  </div>
                  {lic.notes && (

@@ -57,7 +57,7 @@ service cloud.firestore {
              data.device is string && data.device.size() <= 200 &&
              data.status is string && data.status in ['pending', 'ongoing', 'completed'] &&
              data.history is list && data.history.size() <= 50 &&
-             (!('completionDate' in data) || data.completionDate is string) &&
+             (!('completionDate' in data) || data.completionDate is string || data.completionDate == null) &&
              (!('mechanicId' in data) || data.mechanicId is string) &&
              (!('shopCenterName' in data) || data.shopCenterName is string) &&
              (!('reportedIssues' in data) || data.reportedIssues is string) &&
@@ -158,7 +158,7 @@ service cloud.firestore {
       allow get: if isSignedIn() && isValidId(userId);
       // For preview purposes, we'll allow any signed-in user to list users so the directory works
       allow list: if isSignedIn();
-      allow create: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming()) && incoming().createdAt == request.time;
+      allow create: if isSignedIn() && (userId == request.auth.uid || isAdmin()) && isValidUser(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && incoming().updatedAt == request.time && (
         isAdmin() ||
         (userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'fullName', 'photoURL', 'phone', 'department', 'lastPasswordChange', 'updatedAt']))

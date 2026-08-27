@@ -1,5 +1,5 @@
 import localforage from 'localforage';
-import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, deleteField } from 'firebase/firestore';
 import { db } from './firebase';
 import { SupportTicket, User, Repair, ISPAccount, LicenseStatus } from '../types';
 
@@ -245,8 +245,12 @@ export async function processAllPendingSyncActions(): Promise<{ success: boolean
           });
           break;
         case 'UPDATE_TICKET':
+          const ticketUpdates = { ...action.payload.updates };
+          if (ticketUpdates.resolvedAt === null) {
+            ticketUpdates.resolvedAt = deleteField();
+          }
           await updateDoc(doc(db, "tickets", action.payload.id), {
-            ...action.payload.updates,
+            ...ticketUpdates,
             updatedAt: serverTimestamp()
           });
           break;
@@ -263,8 +267,12 @@ export async function processAllPendingSyncActions(): Promise<{ success: boolean
           });
           break;
         case 'UPDATE_REPAIR':
+          const repairUpdates = { ...action.payload.updates };
+          if (repairUpdates.completionDate === null) {
+            repairUpdates.completionDate = deleteField();
+          }
           await updateDoc(doc(db, "repairs", action.payload.id), {
-            ...action.payload.updates,
+            ...repairUpdates,
             updatedAt: serverTimestamp()
           });
           break;

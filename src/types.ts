@@ -189,7 +189,7 @@ export interface ProjectNote {
 export interface ProjectTemplate {
   id: string;
   name: string;
-  steps: { id: string; title: string; completed: boolean }[];
+  steps: { id: string; title: string; description?: string; targetDate?: string; assignedTo?: string; completed: boolean }[];
   createdAt: any;
 }
 
@@ -213,7 +213,7 @@ export interface SchoolProject {
   description: string;
   attachments?: { name: string; url: string; uploadedAt: string }[];
   bugFixLog?: BugTask[];
-  steps?: { id: string; title: string; completed: boolean }[];
+  steps?: { id: string; title: string; description?: string; targetDate?: string; assignedTo?: string; completed: boolean }[];
   projectNotes?: ProjectNote[];
   activityHistory?: ActivityLogEvent[];
   notificationsEnabled?: boolean;

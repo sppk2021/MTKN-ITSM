@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, deleteField } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
 import { format } from "date-fns";
 import { Search, X } from "lucide-react";
@@ -27,6 +27,7 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
   const [assistants, setAssistants] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('active');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState<string | null>(null);
@@ -46,6 +47,7 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
 
   const clearAllFiltersAndInputs = () => {
     setSearchQuery('');
+    setStatusFilter('active');
     resetNewRepair();
     setHistoryNote('');
   };
@@ -236,19 +238,26 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
       [field]: value
     };
     if (field === 'status' && value === 'completed') updates.completionDate = new Date().toISOString();
-    if (field === 'status' && value !== 'completed') updates.completionDate = null;
+    if (field === 'status' && value !== 'completed') updates.completionDate = null; // Use null for local state initially
+    
+    const optimisticUpdated = repairs.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r);
+    setRepairs(optimisticUpdated);
 
     if (!navigator.onLine) {
-      const updated = repairs.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r);
-      setRepairs(updated);
-      await saveRepairsLocal(updated);
+      await saveRepairsLocal(optimisticUpdated);
       await addPendingSyncAction('UPDATE_REPAIR', { id, updates });
       return;
     }
 
     try {
+      // For Firestore, if completionDate is null, use deleteField() to properly unset it
+      const firestoreUpdates = { ...updates };
+      if (firestoreUpdates.completionDate === null) {
+        firestoreUpdates.completionDate = deleteField();
+      }
+      
       await updateDoc(doc(db, "repairs", id), {
-        ...updates,
+        ...firestoreUpdates,
         updatedAt: serverTimestamp()
       });
       fetchRepairs();
@@ -262,6 +271,10 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
   };
 
   const filteredRepairs = repairs.filter(repair => {
+    const isCompleted = repair.status === 'completed';
+    if (statusFilter === 'active' && isCompleted) return false;
+    if (statusFilter === 'completed' && !isCompleted) return false;
+
     if (!searchQuery.trim()) return true;
     const lowerQ = searchQuery.toLowerCase();
     
@@ -293,8 +306,8 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
       </header>
 
       <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex items-center relative max-w-md flex-1">
+        <div className="mb-6 flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex items-center relative max-w-md flex-1 w-full">
             <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3" />
             <input
               type="text"
@@ -314,13 +327,24 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
               </button>
             )}
           </div>
-          {searchQuery && (
+          <div className="w-full sm:w-48 shrink-0">
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value as any)}
+              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
+            >
+              <option value="active">Active Repairs</option>
+              <option value="completed">Completed</option>
+              <option value="all">All Repairs</option>
+            </select>
+          </div>
+          {(searchQuery || statusFilter !== 'active') && (
             <button
               type="button"
               onClick={clearAllFiltersAndInputs}
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer shrink-0"
             >
-              Clear Filter
+              Clear Filters
             </button>
           )}
         </div>
@@ -346,7 +370,14 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
                     </div>
                     <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{repair.title}</h3>
                   </div>
-                  <span className={`shrink-0 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-full ${ repair.status === 'completed' ? 'bg-green-100 text-green-700' : repair.status === 'ongoing' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500' }`}>
+                  <span 
+                    title={
+                      repair.status === 'pending' ? 'Device is queued for repair' :
+                      repair.status === 'ongoing' ? 'Mechanic is currently repairing the device' :
+                      repair.status === 'completed' ? 'Repair is finished and device is ready' : ''
+                    }
+                    className={`cursor-help shrink-0 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-full ${ repair.status === 'completed' ? 'bg-green-100 text-green-700' : repair.status === 'ongoing' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500' }`}
+                  >
                     {repair.status}
                   </span>
                 </div>

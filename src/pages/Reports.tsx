@@ -11,15 +11,6 @@ import {
   Mail, Settings, Send, Trash2, Check
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import { 
-  getEmailSettings, 
-  saveEmailSettings, 
-  sendEmailAlert, 
-  getMailtoLink, 
-  getAlertRecipients, 
-  saveAlertRecipients 
-} from "../lib/emailService";
-
 import { UserPermissions } from "../types";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
@@ -48,16 +39,6 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
   const [searchQuery, setSearchQuery] = useState('');
 
   // Email Alerts settings and log states
-  const [emailLogs, setEmailLogs] = useState<any[]>([]);
-  const [recipients, setRecipients] = useState<string[]>([]);
-  const [recipientInput, setRecipientInput] = useState<string>("");
-  const [isSendingTest, setIsSendingTest] = useState(false);
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
-  const [emailjsEnabled, setEmailjsEnabled] = useState(false);
-  const [emailjsServiceId, setEmailjsServiceId] = useState("");
-  const [emailjsTemplateId, setEmailjsTemplateId] = useState("");
-  const [emailjsPublicKey, setEmailjsPublicKey] = useState("");
-  const [emailFeedback, setEmailFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Process data for charts
   const [ticketData, setTicketData] = useState<any[]>([]);
@@ -74,7 +55,6 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
       let fetchedIsps: any[] = [];
       let fetchedLicenses: any[] = [];
       let fetchedUsers: any[] = [];
-      let fetchedEmailLogs: any[] = [];
 
       try {
         const snap = await getDocs(collection(db, "tickets"));
@@ -111,36 +91,12 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
         console.error("Error loading users collection:", err);
       }
 
-      try {
-        const snap = await getDocs(collection(db, "email_alerts_log"));
-        fetchedEmailLogs = snap.docs
-          .map(e => ({ id: e.id, ...e.data() } as any))
-          .sort((a, b) => {
-            const timeA = new Date(a.timestamp || a.createdAt || 0).getTime();
-            const timeB = new Date(b.timestamp || b.createdAt || 0).getTime();
-            return timeB - timeA;
-          });
-      } catch (err) {
-        console.error("Error loading email_alerts_log:", err);
-      }
 
       setTickets(fetchedTickets);
       setRepairs(fetchedRepairs);
       setIsps(fetchedIsps);
       setLicenses(fetchedLicenses);
       setUsers(fetchedUsers);
-      setEmailLogs(fetchedEmailLogs);
-
-      try {
-        const emailSettings = await getEmailSettings();
-        setRecipients(emailSettings.recipients || []);
-        setEmailjsEnabled(!!emailSettings.emailjs_enabled);
-        setEmailjsServiceId(emailSettings.emailjs_service_id || "");
-        setEmailjsTemplateId(emailSettings.emailjs_template_id || "");
-        setEmailjsPublicKey(emailSettings.emailjs_public_key || "");
-      } catch (err) {
-        console.error("Error getting alert email settings:", err);
-      }
 
       // Process tickets by status
       const tStats: Record<string, number> = { open: 0, in_progress: 0, resolved: 0, closed: 0 };
@@ -314,15 +270,6 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
         Notes: l.notes || ""
       }));
       filename = "software_and_domains_report.csv";
-    } else if (activeTab === 'email_alerts') {
-      dataToExport = emailLogs.map(e => ({
-        Timestamp: e.timestamp ? format(new Date(e.timestamp), 'yyyy-MM-dd HH:mm:ss') : "N/A",
-        Type: e.type || "alert",
-        Status: e.status || "sent",
-        Subject: e.subject || "",
-        Recipients: Array.isArray(e.recipients) ? e.recipients.join('; ') : (e.recipients || ""),
-        Message: (e.body || "").replace(/\n/g, ' ')
-      }));
       filename = "email_alerts_dispatch_log.csv";
     }
 
@@ -380,110 +327,6 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
     );
   }, [licenses, searchQuery]);
 
-  const filteredEmailLogs = useMemo(() => {
-    return emailLogs.filter(e => 
-      (e.subject?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (e.body?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (Array.isArray(e.recipients) ? e.recipients.join(' ') : (e.recipients || '')).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (e.status?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (e.type?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-    );
-  }, [emailLogs, searchQuery]);
-
-  // Email Configuration Actions
-  const handleAddRecipient = () => {
-    const email = recipientInput.trim().toLowerCase();
-    if (!email || !email.includes("@")) {
-      setEmailFeedback({ type: 'error', message: 'Please enter a valid email address.' });
-      return;
-    }
-    if (recipients.map(r => r.toLowerCase()).includes(email)) {
-      setEmailFeedback({ type: 'error', message: 'Recipient email is already in the list.' });
-      return;
-    }
-    setRecipients([...recipients, email]);
-    setRecipientInput("");
-    setEmailFeedback({ type: 'success', message: `Added "${email}" to recipient list. Click "Save Alert Settings" to persist.` });
-  };
-
-  const handleRemoveRecipient = (emailToRemove: string) => {
-    setRecipients(recipients.filter(e => e.toLowerCase() !== emailToRemove.toLowerCase()));
-    setEmailFeedback({ type: 'success', message: `Removed "${emailToRemove}". Remember to click "Save Alert Settings".` });
-  };
-
-  const handleAddCurrentUserEmail = () => {
-    const userEmail = auth.currentUser?.email;
-    if (userEmail) {
-      const lower = userEmail.toLowerCase();
-      if (!recipients.map(r => r.toLowerCase()).includes(lower)) {
-        setRecipients([...recipients, lower]);
-        setEmailFeedback({ type: 'success', message: `Added logged-in user email (${userEmail}).` });
-      } else {
-        setEmailFeedback({ type: 'error', message: `Email ${userEmail} is already in the recipient list.` });
-      }
-    } else {
-      setEmailFeedback({ type: 'error', message: 'No authenticated user email found.' });
-    }
-  };
-
-  const handleSaveEmailSettings = async () => {
-    try {
-      setIsSavingSettings(true);
-      setEmailFeedback(null);
-      await saveEmailSettings({
-        recipients,
-        emailjs_enabled: emailjsEnabled,
-        emailjs_service_id: emailjsServiceId.trim(),
-        emailjs_template_id: emailjsTemplateId.trim(),
-        emailjs_public_key: emailjsPublicKey.trim()
-      });
-      setEmailFeedback({ type: 'success', message: 'Email alert settings & recipients successfully saved to database!' });
-      setTimeout(() => setEmailFeedback(null), 5000);
-    } catch (err: any) {
-      console.error("Error saving email settings:", err);
-      setEmailFeedback({ type: 'error', message: err.message || 'Failed to save email settings.' });
-    } finally {
-      setIsSavingSettings(false);
-    }
-  };
-
-  const handleSendTestAlert = async () => {
-    if (recipients.length === 0) {
-      setEmailFeedback({ type: 'error', message: 'Please add at least one recipient email address first.' });
-      return;
-    }
-    try {
-      setIsSendingTest(true);
-      setEmailFeedback(null);
-      const testSubject = `[TEST ALERT] MTKN ITSM System Diagnostic (${format(new Date(), 'yyyy-MM-dd HH:mm')})`;
-      const testBody = `This is a test notification generated by ${auth.currentUser?.email || "System Administrator"}.\n\nAlert Destination: ${recipients.join(", ")}\nSystem Status: Operational\n\nAll notification pipelines are working properly.`;
-      
-      const result = await sendEmailAlert(testSubject, testBody, "log_update");
-      
-      if (result.status === "sent") {
-        setEmailFeedback({ 
-          type: 'success', 
-          message: emailjsEnabled && emailjsServiceId 
-            ? `Test alert dispatched via EmailJS to ${recipients.length} recipients successfully!` 
-            : `Test alert logged to system successfully! (EmailJS disabled; records stored in audit log)` 
-        });
-      } else {
-        setEmailFeedback({ 
-          type: 'error', 
-          message: 'Test alert recorded with delivery warnings. Check your EmailJS credentials or network connection.' 
-        });
-      }
-      
-      // Refresh all data
-      await fetchAllData();
-      setTimeout(() => setEmailFeedback(null), 6000);
-    } catch (err: any) {
-      console.error("Error sending test email:", err);
-      setEmailFeedback({ type: 'error', message: err.message || 'Failed to dispatch test alert.' });
-    } finally {
-      setIsSendingTest(false);
-    }
-  };
 
   return (
     <>
@@ -751,13 +594,6 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 >
                   Software & Domains ({filteredLicenses.length})
                 </button>
-                <button 
-                  onClick={() => { setActiveTab('email_alerts'); setSearchQuery(''); }}
-                  className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'email_alerts' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  Mail & Alert Logs ({filteredEmailLogs.length})
-                </button>
               </div>
 
               {/* Tab Contents */}
@@ -940,305 +776,6 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                   </table>
                 )}
 
-                {activeTab === 'email_alerts' && (
-                  <div className="p-6 space-y-6">
-                    {/* Feedback Toast */}
-                    {emailFeedback && (
-                      <div className={`p-4 rounded-xl border flex items-center justify-between gap-3 text-sm font-medium ${ emailFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200' }`}>
-                        <div className="flex items-center gap-2">
-                          {emailFeedback.type === 'success' ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                          ) : (
-                            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
-                          )}
-                          <span>{emailFeedback.message}</span>
-                        </div>
-                        <button 
-                          onClick={() => setEmailFeedback(null)}
-                          className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                        >
-                          Dismiss
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Top Configuration Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Left: Email Alert Recipients */}
-                      <div className="bg-slate-50/70 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                              <Mail className="w-4 h-4 text-blue-600" />
-                              Alert Recipients List
-                            </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              Team members who receive automated outage & maintenance emails.
-                            </p>
-                          </div>
-                          <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full border border-blue-200">
-                            {recipients.length} Recipient{recipients.length !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-
-                        {/* Add Recipient Form */}
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <div className="relative flex-1">
-                            <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input
-                              type="email"
-                              value={recipientInput}
-                              onChange={(e) => setRecipientInput(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleAddRecipient();
-                                }
-                              }}
-                              placeholder="Enter email e.g. ops@mtknitsm.com"
-                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 dark:text-slate-200 font-mono"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleAddRecipient}
-                            className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors whitespace-nowrap"
-                          >
-                            + Add Recipient
-                          </button>
-                        </div>
-
-                        {/* Quick Add Logged-in Admin button */}
-                        {auth.currentUser?.email && !recipients.map(r => r.toLowerCase()).includes(auth.currentUser.email.toLowerCase()) && (
-                          <div className="flex items-center justify-between p-2.5 bg-blue-50/60 border border-blue-100 rounded-lg">
-                            <span className="text-xs text-blue-700 font-medium">
-                              Logged in as: <strong className="font-mono">{auth.currentUser.email}</strong>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={handleAddCurrentUserEmail}
-                              className="text-xs font-bold text-blue-700 hover:text-blue-900 bg-white dark:bg-slate-800 border border-blue-200 px-2.5 py-1 rounded shadow-sm hover:bg-blue-50 transition-colors"
-                            >
-                              + Add My Email
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Recipients Chips */}
-                        <div className="space-y-1.5 pt-2">
-                          <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            Active Email List
-                          </label>
-                          {recipients.length === 0 ? (
-                            <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">No email recipients configured yet.</p>
-                          ) : (
-                            <div className="flex flex-wrap gap-2">
-                              {recipients.map((email) => (
-                                <span
-                                  key={email}
-                                  className="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg text-xs font-mono shadow-xs group hover:border-slate-300"
-                                >
-                                  <Mail className="w-3 h-3 text-blue-500" />
-                                  <span>{email}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveRecipient(email)}
-                                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 ml-1 transition-colors p-0.5 rounded"
-                                    title={`Remove ${email}`}
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Save Button */}
-                        <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
-                          <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                            Saved globally in Firestore settings
-                          </span>
-                          <button
-                            type="button"
-                            onClick={handleSaveEmailSettings}
-                            disabled={isSavingSettings}
-                            className="px-4 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
-                          >
-                            <Settings className={`w-3.5 h-3.5 ${isSavingSettings ? 'animate-spin' : ''}`} />
-                            {isSavingSettings ? 'Saving...' : 'Save Alert Settings'}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Right: Automated Mail Gateway (EmailJS / REST) */}
-                      <div className="bg-slate-50/70 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                              <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                              Automated Email Dispatch Gateway
-                            </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              Configure EmailJS REST API keys for automatic ISP outage notifications.
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Enable Switch */}
-                        <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
-                          <div>
-                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                              Enable Automated Outage Alerts
-                            </p>
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                              Triggers instant email alerts to all recipients on network downtime.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setEmailjsEnabled(!emailjsEnabled)}
-                            className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${ emailjsEnabled ? 'bg-blue-600' : 'bg-slate-300' }`}
-                          >
-                            <div
-                              className={`bg-white dark:bg-slate-800 w-4 h-4 rounded-full shadow-md transform transition-transform ${ emailjsEnabled ? 'translate-x-5' : 'translate-x-0' }`}
-                            />
-                          </button>
-                        </div>
-
-                        {/* EmailJS Credentials */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                          <div>
-                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                              Service ID
-                            </label>
-                            <input
-                              type="text"
-                              value={emailjsServiceId}
-                              onChange={(e) => setEmailjsServiceId(e.target.value)}
-                              placeholder="e.g. service_xxxx"
-                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none focus:border-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                              Template ID
-                            </label>
-                            <input
-                              type="text"
-                              value={emailjsTemplateId}
-                              onChange={(e) => setEmailjsTemplateId(e.target.value)}
-                              placeholder="e.g. template_xxxx"
-                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none focus:border-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                              Public Key
-                            </label>
-                            <input
-                              type="text"
-                              value={emailjsPublicKey}
-                              onChange={(e) => setEmailjsPublicKey(e.target.value)}
-                              placeholder="e.g. user_xxxx"
-                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none focus:border-blue-500"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
-                          <a
-                            href={getMailtoLink(
-                              "[MTKN ITSM Alert] System Outage Notification",
-                              "Dear Team,\n\nThis is an operational notice regarding current network connectivity status.\n\nBest regards,\nIT Operations Team",
-                              recipients
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1.5"
-                          >
-                            <Mail className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                            Open Mail Client
-                          </a>
-
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={handleSendTestAlert}
-                              disabled={isSendingTest || recipients.length === 0}
-                              className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
-                            >
-                              <Send className={`w-3.5 h-3.5 ${isSendingTest ? 'animate-pulse' : ''}`} />
-                              {isSendingTest ? 'Sending Test...' : 'Send Test Alert'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dispatched Email Alerts Logs Audit Table */}
-                    <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-xs">
-                      <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                            Dispatched Email Alerts Audit Log ({filteredEmailLogs.length})
-                          </h4>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                            Historical records of automated & manual alerts dispatched by the system
-                          </p>
-                        </div>
-                      </div>
-
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-extrabold tracking-wider">
-                            <th className="px-6 py-3">Timestamp</th>
-                            <th className="px-6 py-3">Type</th>
-                            <th className="px-6 py-3">Subject & Message Preview</th>
-                            <th className="px-6 py-3">Recipients</th>
-                            <th className="px-6 py-3">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                          {filteredEmailLogs.map((log, idx) => (
-                            <tr key={log.id || idx} className="hover:bg-slate-50/40 transition-colors">
-                              <td className="px-6 py-3 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                {formatDate(log.timestamp || log.createdAt)}
-                              </td>
-                              <td className="px-6 py-3">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${ log.type === 'isp_down' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200' }`}>
-                                  {log.type === 'isp_down' ? '🛑 Outage' : '📝 Update'}
-                                </span>
-                              </td>
-                              <td className="px-6 py-3">
-                                <p className="font-semibold text-slate-800 dark:text-slate-200">{log.subject}</p>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-md mt-0.5">
-                                  {log.body?.split('\n')[0] || log.body || "No preview"}
-                                </p>
-                              </td>
-                              <td className="px-6 py-3 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
-                                {Array.isArray(log.recipients) ? log.recipients.join(', ') : (log.recipients || "N/A")}
-                              </td>
-                              <td className="px-6 py-3">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${ log.status === 'sent' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }`}>
-                                  {log.status === 'sent' ? 'Sent' : 'Failed'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                          {filteredEmailLogs.length === 0 && (
-                            <tr>
-                              <td colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
-                                No email alert logs recorded yet. Send a test alert above to create one!
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </>

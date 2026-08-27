@@ -4,7 +4,6 @@ import { auth, db } from "../lib/firebase";
 import { Plus, X, Globe, Activity, Users, MapPin, Clock, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ISPAccount, DowntimeRecord, OperationType, User, UserPermissions } from "../types";
-import { sendEmailAlert } from "../lib/emailService";
 import { 
   saveIspLocal, 
   getIspLocal, 
@@ -164,23 +163,6 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
         });
       }
 
-      // Automatically trigger email alerts for outage and update logs
-      if (navigator.onLine) {
-        if (newAccount.currentStatus === 'offline') {
-          await sendEmailAlert(
-            `🛑 ISP OFFLINE: ${newAccount.ispName} (${newAccount.branchOffice})`,
-            `The connection for ${newAccount.ispName} at the ${newAccount.branchOffice} branch office has been reported as OFFLINE.\n\nConnection Details:\n- ISP Name: ${newAccount.ispName}\n- Branch Office: ${newAccount.branchOffice}\n- Speed/Type: ${newAccount.speed}\n- Connection ID: ${newAccount.userIdDeviceId}\n- Technical Contact: ${newAccount.contactName}\n\nPlease check router power and contact ISP support if necessary.`,
-            'isp_down'
-          );
-        } else {
-          await sendEmailAlert(
-            `📝 ISP Profile Updated: ${newAccount.ispName} (${newAccount.branchOffice})`,
-            `The connection profile or operational status for ${newAccount.ispName} at ${newAccount.branchOffice} has been updated.\n\nNew Details:\n- Status: ${newAccount.currentStatus.toUpperCase()}\n- Speed/Type: ${newAccount.speed}\n- Connection ID: ${newAccount.userIdDeviceId}\n- Contact: ${newAccount.contactName}`,
-            'log_update'
-          );
-        }
-      }
-
       setShowModal(false);
       setEditingId(null);
       setNewAccount({ ispName: '', branchOffice: '', speed: '', userIdDeviceId: '', contactName: '', currentStatus: 'online' });
@@ -260,21 +242,6 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
         updatedAt: serverTimestamp()
       });
 
-      // Send automated alert emails on downtime creation
-      if (finalStatus === 'offline') {
-        await sendEmailAlert(
-          `🛑 ISP OFFLINE: ${account?.ispName} (${account?.branchOffice})`,
-          `A critical network outage incident has been logged for ${account?.ispName} at ${account?.branchOffice}.\n\nIncident Details:\n- Start Date: ${record.date}\n- Reason: ${record.reason || "N/A"}\n- Connection Status: OFFLINE\n- Logged By: System Administrator`,
-          'isp_down'
-        );
-      } else {
-        await sendEmailAlert(
-          `📝 ISP Downtime Logged: ${account?.ispName} (${account?.branchOffice})`,
-          `A network status update has been logged for ${account?.ispName} at ${account?.branchOffice}.\n\nIncident Details:\n- Date: ${record.date}\n- Status: ${record.status.toUpperCase()}\n- Reason: ${record.reason || "N/A"}\n- Logged By: System Administrator`,
-          'log_update'
-        );
-      }
-
       setShowDowntimeModal(null);
       setEditingDowntimeIndex(null);
       setNewDowntime({ date: '', duration: '', reason: '', currentStatus: 'offline', resolvedAt: '', status: 'offline' });
@@ -332,13 +299,6 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
         currentStatus: finalStatus,
         updatedAt: serverTimestamp()
       });
-
-      // Send automated email log update when recovered
-      await sendEmailAlert(
-        `✅ ISP RECOVERY: ${account?.ispName} (${account?.branchOffice})`,
-        `The network connection for ${account?.ispName} at the ${account?.branchOffice} branch office has recovered and is now RESOLVED.\n\nOutage Summary:\n- Start Date/Time: ${record.date}\n- Recovery Date/Time: ${record.resolvedAt}\n- Total Downtime Duration: ${record.duration}\n- Current Connection Status: ${finalStatus.toUpperCase()}`,
-        'log_update'
-      );
 
       fetchAccounts();
     } catch (e) {
@@ -519,7 +479,14 @@ export default function ISPManagement({ userRole = 'staff', userPermissions }: I
                     <MapPin className="w-3.5 h-3.5" />
                     <span>{acc.branchOffice}</span>
                     <span className="mx-2 text-slate-300">•</span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-bold border ${acc.currentStatus === 'online' || !acc.currentStatus ? 'bg-green-50 text-green-700 border-green-200' : acc.currentStatus === 'offline' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                    <span 
+                      title={
+                        acc.currentStatus === 'online' || !acc.currentStatus ? 'Connection is stable and operational' : 
+                        acc.currentStatus === 'offline' ? 'Connection is completely down' : 
+                        'Connection is experiencing high latency, packet loss, or maintenance'
+                      }
+                      className={`cursor-help px-2 py-0.5 rounded text-xs font-bold border ${acc.currentStatus === 'online' || !acc.currentStatus ? 'bg-green-50 text-green-700 border-green-200' : acc.currentStatus === 'offline' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}
+                    >
                       {acc.currentStatus ? acc.currentStatus.toUpperCase() : 'ONLINE'}
                     </span>
                   </div>

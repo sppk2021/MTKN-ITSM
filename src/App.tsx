@@ -649,7 +649,7 @@ export default function App() {
 
   const handleLogoUpdate = async (newLogo: string) => {
     try {
-      await setDoc(doc(db, "settings", "app_config"), { logoBase64: newLogo }, { merge: true });
+      await setDoc(doc(db, "settings", "app_config"), { logoBase64: newLogo, updatedAt: serverTimestamp() }, { merge: true });
       applyAppLogo(newLogo);
     } catch (err) {
       console.error("Error updating logo:", err);

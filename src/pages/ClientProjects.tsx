@@ -4,7 +4,7 @@ import { auth, db } from "../lib/firebase";
 import { 
   FolderKanban, Plus, Search, CheckCircle2, Clock, AlertTriangle, 
   FileText, Wrench, Globe, BookOpen, GraduationCap, X, Trash2, Edit3, 
-  UserCheck, Calendar, DollarSign, ExternalLink, ShieldCheck, Upload, GripVertical, Download, Copy, Bell, BellOff
+  UserCheck, Calendar, DollarSign, ExternalLink, ShieldCheck, Upload, GripVertical, Download, Copy, Bell, BellOff, User as UserIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { SchoolProject, BugTask, User, UserPermissions, OperationType, ProjectTemplate } from "../types";
@@ -30,7 +30,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // Sortable Checklist Item Component
-function SortableChecklistItem({ step, onToggle }: { step: any, onToggle: () => void, key?: React.Key }) {
+function SortableChecklistItem({ step, onToggle, users }: { step: any, onToggle: () => void, users?: any[], key?: React.Key }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: step.id });
   
   const style = {
@@ -38,23 +38,46 @@ function SortableChecklistItem({ step, onToggle }: { step: any, onToggle: () => 
     transition,
   };
 
+  const assignedUser = users?.find(u => u.uid === step.assignedTo);
+
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs">
-      <div className="flex items-center gap-3 flex-1">
-        <div {...attributes} {...listeners} className="cursor-grab text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+    <div ref={setNodeRef} style={style} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs gap-3">
+      <div className="flex items-start sm:items-center gap-3 flex-1">
+        <div {...attributes} {...listeners} className="cursor-grab text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 mt-0.5 sm:mt-0">
           <GripVertical className="w-4 h-4" />
         </div>
         <button
           onClick={onToggle}
-          className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${step.completed ? 'bg-emerald-500 text-white' : 'border border-slate-300 dark:border-slate-600 hover:border-emerald-500'}`}
+          className={`shrink-0 w-5 h-5 rounded flex items-center justify-center transition-colors mt-0.5 sm:mt-0 ${step.completed ? 'bg-emerald-500 text-white' : 'border border-slate-300 dark:border-slate-600 hover:border-emerald-500'}`}
         >
           {step.completed && <CheckCircle2 className="w-3.5 h-3.5" />}
         </button>
-        <span className={step.completed ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white font-medium'}>
-          {step.title}
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className={step.completed ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white font-medium'}>
+            {step.title}
+          </span>
+          {step.description && (
+            <span className={`text-[11px] ${step.completed ? 'text-slate-400 line-through' : 'text-slate-500 dark:text-slate-400'}`}>
+              {step.description}
+            </span>
+          )}
+          {(step.targetDate || assignedUser) && (
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              {step.targetDate && (
+                <span className="inline-flex items-center gap-1 text-[10px] bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">
+                  <Calendar className="w-3 h-3" /> {step.targetDate}
+                </span>
+              )}
+              {assignedUser && (
+                <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded">
+                  <UserIcon className="w-3 h-3" /> {assignedUser.displayName || assignedUser.email}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-      <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${step.completed ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
+      <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-md font-semibold self-start sm:self-auto ${step.completed ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
         {step.completed ? 'Finished' : 'Remaining'}
       </span>
     </div>
@@ -99,6 +122,10 @@ export default function ClientProjects({ userRole = 'staff', userPermissions }: 
   // Bug & Task Logging inside detail view
   const [newBugText, setNewBugText] = useState('');
   const [newStepText, setNewStepText] = useState('');
+  const [newStepDescription, setNewStepDescription] = useState('');
+  const [newStepAssignee, setNewStepAssignee] = useState('');
+  const [newStepTargetDate, setNewStepTargetDate] = useState('');
+  const [showDetailedStepForm, setShowDetailedStepForm] = useState(false);
   const [newNoteText, setNewNoteText] = useState('');
   // Attachment upload simulation
   const [attachmentName, setAttachmentName] = useState('');
@@ -439,11 +466,15 @@ export default function ClientProjects({ userRole = 'staff', userPermissions }: 
     const project = projects.find(p => p.id === projectId);
     if (!project) return;
 
-    const newStep = {
+    const newStep: any = {
       id: `step-${Date.now()}`,
       title: newStepText.trim(),
       completed: false,
     };
+    
+    if (newStepDescription.trim()) newStep.description = newStepDescription.trim();
+    if (newStepAssignee) newStep.assignedTo = newStepAssignee;
+    if (newStepTargetDate) newStep.targetDate = newStepTargetDate;
 
     const updatedSteps = [...(project.steps || []), newStep];
     const updatedHistory = [
@@ -457,6 +488,10 @@ export default function ClientProjects({ userRole = 'staff', userPermissions }: 
         updatedAt: serverTimestamp(),
       });
       setNewStepText('');
+      setNewStepDescription('');
+      setNewStepAssignee('');
+      setNewStepTargetDate('');
+      setShowDetailedStepForm(false);
       fetchProjects();
       if (selectedProject) {
         setSelectedProject({ ...selectedProject, steps: updatedSteps, activityHistory: updatedHistory });
@@ -570,15 +605,15 @@ export default function ClientProjects({ userRole = 'staff', userPermissions }: 
   const getStatusBadge = (status: SchoolProject['status']) => {
     switch(status) {
       case 'planning':
-        return <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5"><Clock className="w-3 h-3" /> Planning</span>;
+        return <span title="Project requirements and scope are being defined" className="cursor-help px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5 w-fit"><Clock className="w-3 h-3" /> Planning</span>;
       case 'development':
-        return <span className="px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5"><Wrench className="w-3 h-3" /> In Development</span>;
+        return <span title="Active coding and implementation in progress" className="cursor-help px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5 w-fit"><Wrench className="w-3 h-3" /> In Development</span>;
       case 'testing':
-        return <span className="px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Testing & QA</span>;
+        return <span title="Quality assurance and user acceptance testing" className="cursor-help px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5 w-fit"><AlertTriangle className="w-3 h-3" /> Testing & QA</span>;
       case 'deployed':
-        return <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3" /> Deployed (Live)</span>;
+        return <span title="Project is live and in production" className="cursor-help px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5 w-fit"><CheckCircle2 className="w-3 h-3" /> Deployed (Live)</span>;
       case 'maintenance':
-        return <span className="px-2.5 py-1 bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> Maintenance</span>;
+        return <span title="Ongoing support and minor updates" className="cursor-help px-2.5 py-1 bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 text-xs font-semibold rounded-full flex items-center gap-1.5 w-fit"><ShieldCheck className="w-3 h-3" /> Maintenance</span>;
     }
   };
 
@@ -881,6 +916,7 @@ export default function ClientProjects({ userRole = 'staff', userPermissions }: 
                       <SortableChecklistItem
                         key={step.id}
                         step={step}
+                        users={allUsers}
                         onToggle={() => handleToggleStep(selectedProject.id, step.id)}
                       />
                     ))}
@@ -890,21 +926,85 @@ export default function ClientProjects({ userRole = 'staff', userPermissions }: 
 
               {canEdit && (
                 <div className="flex flex-col gap-2 pt-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Add custom milestone or task step..."
-                      value={newStepText}
-                      onChange={e => setNewStepText(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white"
-                    />
-                    <button
-                      onClick={() => handleAddStep(selectedProject.id)}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold cursor-pointer"
-                    >
-                      Add Step
-                    </button>
-                  </div>
+                  {!showDetailedStepForm ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Add quick milestone..."
+                        value={newStepText}
+                        onChange={e => setNewStepText(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleAddStep(selectedProject.id); }}
+                        className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500"
+                      />
+                      <button
+                        onClick={() => setShowDetailedStepForm(true)}
+                        className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-xs font-semibold cursor-pointer border border-slate-200 dark:border-slate-700"
+                      >
+                        Detailed
+                      </button>
+                      <button
+                        onClick={() => handleAddStep(selectedProject.id)}
+                        disabled={!newStepText.trim()}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold cursor-pointer"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl space-y-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Add Detailed Step</span>
+                        <button onClick={() => setShowDetailedStepForm(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Step Title *"
+                        value={newStepText}
+                        onChange={e => setNewStepText(e.target.value)}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500"
+                      />
+                      <textarea
+                        placeholder="Description (optional)"
+                        value={newStepDescription}
+                        onChange={e => setNewStepDescription(e.target.value)}
+                        rows={2}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500 resize-none"
+                      />
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <select
+                            value={newStepAssignee}
+                            onChange={e => setNewStepAssignee(e.target.value)}
+                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500"
+                          >
+                            <option value="">Unassigned</option>
+                            {allUsers.map(u => (
+                              <option key={u.uid} value={u.uid}>{u.displayName || u.email}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            type="date"
+                            value={newStepTargetDate}
+                            onChange={e => setNewStepTargetDate(e.target.value)}
+                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end pt-1">
+                        <button
+                          onClick={() => handleAddStep(selectedProject.id)}
+                          disabled={!newStepText.trim()}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold cursor-pointer w-full"
+                        >
+                          Add Step
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex justify-end mt-1">
                     {!showSaveTemplatePrompt ? (
                       <button

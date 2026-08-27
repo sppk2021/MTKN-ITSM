@@ -181,6 +181,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
     upcomingDeadlinesCount: 0,
     urgentCount: 0,
   });
+  const [allUsers, setAllUsers] = useState<any[]>([]);
 
   const projectCompletionData = useMemo(() => {
     const buckets = [
@@ -247,6 +248,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
         const allRepairs = repairsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const allLicenses = licensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setAllUsers(allUsers);
         const allProjects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         const activeProjects = allProjects.filter((p: any) => p.status !== 'deployed' && p.status !== 'maintenance');
@@ -550,15 +552,28 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                         </div>
 
                         {/* Steps breakdown list */}
-                        <div className="space-y-1 pt-1 border-t border-slate-200/60 dark:border-slate-800 text-[11px]">
-                          {steps.map((s: any) => (
-                            <div key={s.id} className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                              <span className={`truncate max-w-[220px] ${s.completed ? 'line-through text-slate-400' : ''}`}>• {s.title}</span>
-                              <span className={s.completed ? 'text-emerald-600 font-semibold' : 'text-amber-500 font-semibold'}>
-                                {s.completed ? 'Finished' : 'Remaining'}
-                              </span>
-                            </div>
-                          ))}
+                        <div className="space-y-2 pt-2 border-t border-slate-200/60 dark:border-slate-800 text-[11px]">
+                          {steps.map((s: any) => {
+                            const assignee = s.assignedTo ? allUsers.find(u => u.uid === s.assignedTo || u.id === s.assignedTo) : null;
+                            return (
+                              <div key={s.id} className="flex flex-col gap-1 text-slate-600 dark:text-slate-400">
+                                <div className="flex items-start justify-between">
+                                  <span className={`flex-1 break-words line-clamp-2 pr-2 ${s.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300 font-medium'}`}>
+                                    • {s.title}
+                                  </span>
+                                  <span className={`shrink-0 ${s.completed ? 'text-emerald-600 font-semibold' : 'text-amber-500 font-semibold'}`}>
+                                    {s.completed ? 'Finished' : 'Remaining'}
+                                  </span>
+                                </div>
+                                {(s.targetDate || assignee) && (
+                                  <div className="flex items-center gap-2 pl-2">
+                                    {s.targetDate && <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800 text-slate-500">🎯 {s.targetDate}</span>}
+                                    {assignee && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">👤 {assignee.displayName || assignee.email}</span>}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
