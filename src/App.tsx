@@ -1,16 +1,18 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { 
   LayoutDashboard, Users, BarChart3, CalendarDays, Wrench, LogOut, 
   Ticket, Globe, Server, Shield, Lock, User as UserIcon, LogIn, 
   ChevronLeft, ChevronRight, Download, Menu, X as CloseIcon, 
-  UserCheck, Settings2, Sparkles, Sun, Moon, FolderKanban
+  UserCheck, Settings2, Sun, Moon, FolderKanban, Search
 } from "lucide-react";
 import { auth, db } from "./lib/firebase";
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 import { AppLogoSelectorModal } from "./components/AppLogoSelectorModal";
+import { GlobalSearchBar } from "./components/GlobalSearchBar";
+import { TopNavbar } from "./components/TopNavbar";
 import ManagementDashboard from "./pages/ManagementDashboard";
 import UsersPage from "./pages/UsersPage";
 import Reports from "./pages/Reports";
@@ -36,6 +38,7 @@ interface SidebarProps {
   appLogo?: string | null;
   onLogoUpdate?: (newLogo: string) => void;
   onOpenProfile: () => void;
+  onOpenSearch?: () => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
 }
@@ -47,7 +50,7 @@ interface NavItem {
   tabKey: TabKey;
 }
 
-function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appLogo, onLogoUpdate, onOpenProfile, isDarkMode, toggleTheme }: SidebarProps) {
+function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appLogo, onLogoUpdate, onOpenProfile, onOpenSearch, isDarkMode, toggleTheme }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem("sidebar_collapsed") === "true");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -477,6 +480,17 @@ function Sidebar({ role, userEmail, displayName, photoURL, userPermissions, appL
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Mobile Global Search Button */}
+          {onOpenSearch && (
+            <button
+              onClick={onOpenSearch}
+              className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Search System (Tickets, Repairs, Projects, Users)"
+            >
+              <Search className="w-4.5 h-4.5" />
+            </button>
+          )}
+
           {/* Mobile Profile Trigger Button */}
           <button
             onClick={onOpenProfile}
@@ -537,6 +551,7 @@ export default function App() {
     return localStorage.getItem("app_logo_cache") || null;
   });
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -817,7 +832,6 @@ export default function App() {
   }
 
   return (
-    <Router>
       <div className="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-200 overflow-hidden">
         <Sidebar 
           role={userRole} 
@@ -828,10 +842,21 @@ export default function App() {
           appLogo={appLogo}
           onLogoUpdate={handleLogoUpdate}
           onOpenProfile={() => setIsProfileModalOpen(true)}
+          onOpenSearch={() => setIsGlobalSearchOpen(true)}
           isDarkMode={isDarkMode}
           toggleTheme={toggleTheme}
         />
         <main className="flex-1 flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-900 pb-20 md:pb-6">
+          <TopNavbar
+            onOpenSearch={() => setIsGlobalSearchOpen(true)}
+            userRole={userRole}
+            displayName={userDisplayName}
+            userEmail={user?.email}
+            photoURL={userPhotoURL}
+            onOpenProfile={() => setIsProfileModalOpen(true)}
+            isDarkMode={isDarkMode}
+            toggleTheme={toggleTheme}
+          />
           <Routes>
             <Route 
               path="/" 
@@ -967,9 +992,16 @@ export default function App() {
           onProfileUpdated={handleProfileUpdated}
         />
 
+        {/* Global Search Bar Modal */}
+        <GlobalSearchBar
+          isOpen={isGlobalSearchOpen}
+          onClose={() => setIsGlobalSearchOpen(false)}
+          onOpen={() => setIsGlobalSearchOpen(true)}
+          userRole={userRole}
+        />
+
 
       </div>
-    </Router>
   );
 }
 

@@ -154,6 +154,22 @@ service cloud.firestore {
              data.keys().hasAll(['name', 'steps', 'createdAt']);
     }
 
+    // ITProject validation
+    function isValidITProject(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.department is string &&
+             data.status is string && data.status in ['draft', 'active', 'on_hold', 'completed', 'cancelled'] &&
+             (!('description' in data) || data.description is string) &&
+             (!('phases' in data) || data.phases is list) &&
+             (!('budget' in data) || data.budget is map) &&
+             (!('risks' in data) || data.risks is list) &&
+             (!('issues' in data) || data.issues is list) &&
+             (!('changeRequests' in data) || data.changeRequests is list) &&
+             (!('documents' in data) || data.documents is list) &&
+             (!('milestones' in data) || data.milestones is list) &&
+             data.keys().hasAll(['title', 'department', 'status', 'createdAt', 'updatedAt']);
+    }
+
     match /users/{userId} {
       allow get: if isSignedIn() && isValidId(userId);
       // For preview purposes, we'll allow any signed-in user to list users so the directory works
@@ -202,7 +218,7 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create, update: if isSignedIn() && isValidId(settingId) && isValidSetting(incoming());
       allow delete: if isAdmin();
     }
@@ -225,6 +241,13 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isValidProjectTemplate(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(templateId) && isValidProjectTemplate(incoming());
+      allow delete: if isManagement();
+    }
+
+    match /it_projects/{projectId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidITProject(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(projectId) && isValidITProject(incoming()) && incoming().updatedAt == request.time;
       allow delete: if isManagement();
     }
   }

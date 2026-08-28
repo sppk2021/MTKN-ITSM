@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, deleteField } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
 import { format } from "date-fns";
-import { Search, X } from "lucide-react";
+import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Repair, User, OperationType, UserPermissions } from "../types";
 import { generateNextRepairCode } from "../lib/idGenerator";
 import { 
@@ -20,6 +21,7 @@ interface RepairsTrackingProps {
 }
 
 export default function RepairsTracking({ userRole = 'staff', userPermissions }: RepairsTrackingProps) {
+  const location = useLocation();
   const canEdit = userRole === 'admin' || (userPermissions?.repairs?.edit ?? (userRole !== 'management' && userRole !== 'staff'));
   const canDelete = userRole === 'admin' || (userPermissions?.repairs?.delete ?? false);
 
@@ -28,6 +30,18 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('active');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('search') || (location.state as any)?.searchQuery;
+    if (q) {
+      setSearchQuery(q);
+      setStatusFilter('all');
+      setCurrentPage(1);
+    }
+  }, [location.search, location.state]);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState<string | null>(null);
@@ -287,6 +301,13 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
     return false;
   });
 
+  const totalRepairs = filteredRepairs.length;
+  const totalPages = Math.max(1, Math.ceil(totalRepairs / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalRepairs);
+  const paginatedRepairs = filteredRepairs.slice(startIndex, endIndex);
+
   return (
     <>
       <header className="min-h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
@@ -306,20 +327,26 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
       </header>
 
       <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        <div className="mb-6 flex flex-col sm:flex-row items-center gap-3">
-          <div className="flex items-center relative max-w-md flex-1 w-full">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex items-center relative max-w-md flex-1 min-w-[240px]">
             <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3" />
             <input
               type="text"
               placeholder="Search tickets, devices, or history..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition-shadow"
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow"
             />
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                }}
                 className="absolute right-2.5 p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 rounded cursor-pointer"
                 title="Clear search"
               >
@@ -327,30 +354,59 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
               </button>
             )}
           </div>
-          <div className="w-full sm:w-48 shrink-0">
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value as any)}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
-            >
-              <option value="active">Active Repairs</option>
-              <option value="completed">Completed</option>
-              <option value="all">All Repairs</option>
-            </select>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="w-40 shrink-0">
+              <select
+                value={statusFilter}
+                onChange={e => {
+                  setStatusFilter(e.target.value as any);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
+              >
+                <option value="active">Active Repairs</option>
+                <option value="completed">Completed</option>
+                <option value="all">All Repairs</option>
+              </select>
+            </div>
+
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Show:</span>
+              <select
+                value={pageSize}
+                onChange={e => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent text-xs font-bold text-blue-600 dark:text-blue-400 focus:outline-none cursor-pointer"
+                title="Repair tickets to show on view (10, 30, 50, 100)"
+              >
+                <option value={10} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">10</option>
+                <option value={30} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">30</option>
+                <option value={50} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">50</option>
+                <option value={100} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">100</option>
+              </select>
+            </div>
+
+            {(searchQuery || statusFilter !== 'active') && (
+              <button
+                type="button"
+                onClick={() => {
+                  clearAllFiltersAndInputs();
+                  setCurrentPage(1);
+                }}
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer shrink-0"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
-          {(searchQuery || statusFilter !== 'active') && (
-            <button
-              type="button"
-              onClick={clearAllFiltersAndInputs}
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium px-2.5 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer shrink-0"
-            >
-              Clear Filters
-            </button>
-          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? <div className="text-slate-500 dark:text-slate-400 col-span-full">Loading...</div> : filteredRepairs.map(repair => {
+          {loading ? <div className="text-slate-500 dark:text-slate-400 col-span-full">Loading...</div> : paginatedRepairs.map(repair => {
             const mechanicName = assistants.find(a => a.id === repair.mechanicId)?.email || 'Unassigned';
             const isAdminRepair = isAdminAddedData(repair);
             const isItAssistant = userRole === 'it_assistant';
@@ -475,6 +531,65 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
           )})}
           {filteredRepairs.length === 0 && !loading && <div className="text-slate-500 dark:text-slate-400 col-span-full">No repair records found.</div>}
         </div>
+
+        {/* Pagination Navigation Footer */}
+        {totalRepairs > 0 && (
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Showing <span className="font-bold text-slate-900 dark:text-white">{startIndex + 1}</span> to <span className="font-bold text-slate-900 dark:text-white">{endIndex}</span> of <span className="font-bold text-slate-900 dark:text-white">{totalRepairs}</span> repairs
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={validCurrentPage === 1}
+                  className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    return page === 1 || page === totalPages || Math.abs(page - validCurrentPage) <= 1;
+                  })
+                  .map((page, idx, arr) => {
+                    const prevPage = arr[idx - 1];
+                    const hasGap = prevPage && page - prevPage > 1;
+
+                    return (
+                      <React.Fragment key={page}>
+                        {hasGap && <span className="px-1 text-slate-400 text-xs">...</span>}
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage(page)}
+                          className={`min-w-[32px] h-8 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            validCurrentPage === page
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={validCurrentPage === totalPages}
+                  className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Next Page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {showModal && (
           <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50 backdrop-blur-[2px]">

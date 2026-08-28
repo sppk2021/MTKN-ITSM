@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { collection, query, getDocs, doc, updateDoc, serverTimestamp, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../lib/firebase";
 import { createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
@@ -23,9 +24,18 @@ interface UsersPageProps {
 }
 
 export default function UsersPage({ userRole = 'admin', userPermissions }: UsersPageProps) {
+  const location = useLocation();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('search') || (location.state as any)?.searchQuery;
+    if (q) {
+      setSearchQuery(q);
+    }
+  }, [location.search, location.state]);
   
   // Add User state
   const [showAddModal, setShowAddModal] = useState(false);

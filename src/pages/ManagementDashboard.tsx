@@ -162,7 +162,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
     offlineISPs: 0
   });
 
-  const [recentTickets, setRecentTickets] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [offlineISPs, setOfflineISPs] = useState<any[]>([]);
   const [expiringTrackers, setExpiringTrackers] = useState<any[]>([]);
   const [unassignedCriticalTickets, setUnassignedCriticalTickets] = useState<any[]>([]);
@@ -295,14 +295,51 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
           offlineISPs: issuesISPs.length
         });
 
-        // Recent activity: sort tickets by createdAt
-        const sortedTickets = allTickets.sort((a: any, b: any) => {
-          const ad = a.createdAt?.toMillis?.() || 0;
-          const bd = b.createdAt?.toMillis?.() || 0;
+        // Combine activities
+        const combinedActivity: any[] = [];
+        allTickets.forEach((t: any) => {
+          combinedActivity.push({
+            id: t.id,
+            type: 'ticket',
+            title: t.title,
+            status: t.status,
+            date: t.updatedAt || t.createdAt,
+            extraInfo: t.requestDept || 'General',
+            priority: t.priority
+          });
+        });
+        
+        allRepairs.forEach((r: any) => {
+          combinedActivity.push({
+            id: r.id,
+            type: 'repair',
+            title: r.title,
+            status: r.status,
+            date: r.updatedAt || r.createdAt,
+            extraInfo: r.device || 'Hardware',
+            priority: 'medium'
+          });
+        });
+
+        allLicenses.forEach((l: any) => {
+          combinedActivity.push({
+            id: l.id,
+            type: 'license',
+            title: l.name || 'Unknown Software',
+            status: l.status,
+            date: l.createdAt,
+            extraInfo: l.type || 'Software',
+            priority: 'low'
+          });
+        });
+
+        const sortedActivity = combinedActivity.sort((a: any, b: any) => {
+          const ad = a.date?.toMillis?.() || a.date?.seconds * 1000 || (a.date ? new Date(a.date).getTime() : 0) || 0;
+          const bd = b.date?.toMillis?.() || b.date?.seconds * 1000 || (b.date ? new Date(b.date).getTime() : 0) || 0;
           return bd - ad;
         });
 
-        setRecentTickets(sortedTickets.slice(0, 5));
+        setRecentActivity(sortedActivity.slice(0, 8));
         setOfflineISPs(issuesISPs);
         setExpiringTrackers(expiringSoon);
         setUnassignedCriticalTickets(unassignedCritical.slice(0, 4));
@@ -957,36 +994,44 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
                     </div>
                   </div>
 
-                  {/* Recent Support Activity Feed */}
+                  {/* Recent Activity Feed */}
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                      <h2 className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Recent Support Activity Feed</h2>
+                      <h2 className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Recent Activity Feed</h2>
                     </div>
                     <div className="p-4 divide-y divide-slate-100 dark:divide-slate-800">
-                      {recentTickets.length > 0 ? (
-                        recentTickets.map(ticket => (
-                          <div key={ticket.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase shrink-0 ${ ticket.priority === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-slate-50 text-slate-600 dark:text-slate-400 border border-slate-200' }`}>
-                              {ticket.priority?.[0] || 'T'}
+                      {recentActivity.length > 0 ? (
+                        recentActivity.map(activity => (
+                          <div key={activity.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                              activity.type === 'ticket' 
+                                ? (activity.priority === 'critical' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-blue-50 text-blue-600 border border-blue-100')
+                                : activity.type === 'repair'
+                                  ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                                  : 'bg-purple-50 text-purple-600 border border-purple-100'
+                            }`}>
+                              {activity.type === 'ticket' ? <Ticket className="w-4 h-4" /> : activity.type === 'repair' ? <Wrench className="w-4 h-4" /> : <Server className="w-4 h-4" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{ticket.title}</p>
+                              <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{activity.title}</p>
                               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium truncate">
-                                {ticket.requestDept || 'General'} • {ticket.status?.replace('_', ' ').toUpperCase()}
+                                {activity.extraInfo} • {activity.status?.replace('_', ' ').toUpperCase()}
                               </p>
                             </div>
                             <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono whitespace-nowrap pt-0.5">
-                              {ticket.createdAt?.toDate 
-                                ? format(ticket.createdAt.toDate(), 'MM/dd HH:mm') 
-                                : ticket.createdAt?.seconds 
-                                  ? format(new Date(ticket.createdAt.seconds * 1000), 'MM/dd HH:mm')
-                                  : "Recently"}
+                              {activity.date?.toDate 
+                                ? format(activity.date.toDate(), 'MM/dd HH:mm') 
+                                : activity.date?.seconds 
+                                  ? format(new Date(activity.date.seconds * 1000), 'MM/dd HH:mm')
+                                  : activity.date 
+                                    ? format(new Date(activity.date), 'MM/dd HH:mm')
+                                    : "Recently"}
                             </span>
                           </div>
                         ))
                       ) : (
                         <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
-                          No recent support activity recorded
+                          No recent activity recorded
                         </div>
                       )}
                     </div>
