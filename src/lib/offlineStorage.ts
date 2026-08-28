@@ -177,6 +177,19 @@ export async function getUsersLocal(): Promise<User[]> {
 export async function addPendingSyncAction(type: SyncActionType, payload: any): Promise<void> {
   try {
     const currentQueue = (await syncQueueStore.getItem<SyncAction[]>('queue')) || [];
+    
+    // Check if duplicate action already exists in queue (e.g., same ticketCode or repairCode or payload)
+    const payloadKey = payload?.ticketCode || payload?.repairCode || payload?.id || JSON.stringify(payload);
+    const isDuplicate = currentQueue.some(action => {
+      if (action.type !== type) return false;
+      const existingKey = action.payload?.ticketCode || action.payload?.repairCode || action.payload?.id || JSON.stringify(action.payload);
+      return existingKey === payloadKey;
+    });
+
+    if (isDuplicate) {
+      return;
+    }
+
     const newAction: SyncAction = {
       id: `sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       type,

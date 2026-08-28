@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, deleteField } from "firebase/firestore";
+import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, deleteField, where } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
 import { format } from "date-fns";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -66,24 +66,45 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
     setHistoryNote('');
   };
 
+  const deduplicateRepairs = (list: Repair[]) => {
+    const map = new Map<string, Repair>();
+    for (const r of list) {
+      const key = r.repairCode ? r.repairCode.trim().toUpperCase() : r.id;
+      if (!map.has(key)) {
+        map.set(key, r);
+      } else {
+        const existing = map.get(key)!;
+        const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+        const currentTime = new Date(r.updatedAt || r.createdAt || 0).getTime();
+        if (currentTime >= existingTime) {
+          map.set(key, r);
+        }
+      }
+    }
+    return Array.from(map.values());
+  };
+
   const fetchRepairs = async () => {
     try {
       if (!navigator.onLine) {
         const cached = await getRepairsLocal();
         if (cached.length > 0) {
-          setRepairs(cached);
+          const dedupedCached = deduplicateRepairs(cached);
+          setRepairs(dedupedCached);
         }
         return;
       }
       const snap = await getDocs(query(collection(db, "repairs")));
       const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Repair));
-      setRepairs(list);
-      await saveRepairsLocal(list);
+      const dedupedList = deduplicateRepairs(list);
+      setRepairs(dedupedList);
+      await saveRepairsLocal(dedupedList);
     } catch (e) {
       console.error(e);
       const cached = await getRepairsLocal();
       if (cached.length > 0) {
-        setRepairs(cached);
+        const dedupedCached = deduplicateRepairs(cached);
+        setRepairs(dedupedCached);
       }
     }
   };
@@ -133,9 +154,62 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
     return creator?.role === 'admin';
   };
 
+  const handleCleanupDuplicates = async () => {
+    const map = new Map<string, Repair>();
+    const duplicatesToRemove: string[] = [];
+
+    const sorted = [...repairs].sort((a, b) => {
+      const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    for (const r of sorted) {
+      const codeKey = r.repairCode ? r.repairCode.trim().toUpperCase() : '';
+      if (codeKey) {
+        if (map.has(codeKey)) {
+          duplicatesToRemove.push(r.id);
+        } else {
+          map.set(codeKey, r);
+        }
+      }
+    }
+
+    if (duplicatesToRemove.length === 0) {
+      alert("No duplicate repair records found!");
+      return;
+    }
+
+    if (!confirm(`Found ${duplicatesToRemove.length} duplicate repair record(s). Clean them up now?`)) {
+      return;
+    }
+
+    try {
+      for (const id of duplicatesToRemove) {
+        if (!id.startsWith('local_')) {
+          await deleteDoc(doc(db, "repairs", id));
+        }
+      }
+
+      const cleaned = sorted.filter(r => !duplicatesToRemove.includes(r.id));
+      setRepairs(cleaned);
+      await saveRepairsLocal(cleaned);
+      alert(`Successfully removed ${duplicatesToRemove.length} duplicate repair record(s)!`);
+    } catch (err) {
+      console.error("Cleanup error:", err);
+      alert("Error cleaning up duplicate repairs.");
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const repairCode = generateNextRepairCode(repairs);
+
+    // Validation check for existing duplicate repair code
+    if (repairs.some(r => r.repairCode?.trim().toUpperCase() === repairCode.toUpperCase())) {
+      alert(`Validation Error: Repair code ${repairCode} already exists. Please try again.`);
+      return;
+    }
     const repairPayload = {
       ...newRepair,
       repairCode,
@@ -162,6 +236,14 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
     }
 
     try {
+      const qCheck = query(collection(db, "repairs"), where("repairCode", "==", repairCode));
+      const serverCheckSnap = await getDocs(qCheck);
+      if (!serverCheckSnap.empty) {
+        alert(`⚠️ Duplicate Repair Record Detected: Repair code ${repairCode} already exists on the server. Please try again.`);
+        fetchRepairs();
+        return;
+      }
+
       await addDoc(collection(db, "repairs"), {
         ...repairPayload,
         createdAt: serverTimestamp(),
@@ -318,12 +400,21 @@ export default function RepairsTracking({ userRole = 'staff', userPermissions }:
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">Log hardware and system repairs with local-first offline sync</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="w-full sm:w-auto px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors cursor-pointer min-h-[44px]"
-        >
-          New Repair Ticket
-        </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={handleCleanupDuplicates}
+            className="w-full sm:w-auto px-3 py-2 text-xs font-semibold bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition-colors cursor-pointer min-h-[44px]"
+            title="Scan and remove duplicate repair records"
+          >
+            Cleanup Duplicates
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full sm:w-auto px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors cursor-pointer min-h-[44px]"
+          >
+            New Repair Ticket
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">

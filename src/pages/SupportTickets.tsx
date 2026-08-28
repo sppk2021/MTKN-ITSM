@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, deleteField } from "firebase/firestore";
+import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, deleteField, where } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
 import { format } from "date-fns";
 import { Search, Ticket, X, Sparkles, Bot, Loader2, WifiOff, Database, RefreshCw, CheckCircle2, ChevronRight, ChevronLeft, SlidersHorizontal, ArrowLeftRight, Edit3, Trash2 } from "lucide-react";
@@ -218,19 +218,39 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
     }
   };
 
+  const deduplicateTickets = (list: SupportTicket[]) => {
+    const map = new Map<string, SupportTicket>();
+    for (const t of list) {
+      const key = t.ticketCode ? t.ticketCode.trim().toUpperCase() : t.id;
+      if (!map.has(key)) {
+        map.set(key, t);
+      } else {
+        const existing = map.get(key)!;
+        const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+        const currentTime = new Date(t.updatedAt || t.createdAt || 0).getTime();
+        if (currentTime >= existingTime) {
+          map.set(key, t);
+        }
+      }
+    }
+    return Array.from(map.values());
+  };
+
   const fetchTickets = async () => {
     // Local-first load from IndexedDB
     const cached = await getTicketsLocal();
     if (cached && cached.length > 0) {
-      setTickets(cached);
+      const dedupedCached = deduplicateTickets(cached);
+      setTickets(dedupedCached);
     }
 
     if (navigator.onLine) {
       try {
         const snap = await getDocs(query(collection(db, "tickets")));
         const remoteTickets = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as SupportTicket));
-        setTickets(remoteTickets);
-        await saveTicketsLocal(remoteTickets);
+        const dedupedRemote = deduplicateTickets(remoteTickets);
+        setTickets(dedupedRemote);
+        await saveTicketsLocal(dedupedRemote);
       } catch (e) {
         console.warn("Network ticket fetch failed, using local IndexedDB data:", e);
       }
@@ -273,6 +293,53 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
     return creator?.role === 'admin';
   };
 
+  const handleCleanupDuplicates = async () => {
+    const map = new Map<string, SupportTicket>();
+    const duplicatesToRemove: string[] = [];
+
+    const sorted = [...tickets].sort((a, b) => {
+      const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    for (const t of sorted) {
+      const codeKey = t.ticketCode ? t.ticketCode.trim().toUpperCase() : '';
+      if (codeKey) {
+        if (map.has(codeKey)) {
+          duplicatesToRemove.push(t.id);
+        } else {
+          map.set(codeKey, t);
+        }
+      }
+    }
+
+    if (duplicatesToRemove.length === 0) {
+      alert("No duplicate tickets found!");
+      return;
+    }
+
+    if (!confirm(`Found ${duplicatesToRemove.length} duplicate ticket(s) (such as TK-0021 / TK-0010). Clean them up now?`)) {
+      return;
+    }
+
+    try {
+      for (const id of duplicatesToRemove) {
+        if (!id.startsWith('local_')) {
+          await deleteDoc(doc(db, "tickets", id));
+        }
+      }
+
+      const cleaned = sorted.filter(t => !duplicatesToRemove.includes(t.id));
+      setTickets(cleaned);
+      await saveTicketsLocal(cleaned);
+      alert(`Successfully removed ${duplicatesToRemove.length} duplicate ticket(s)!`);
+    } catch (err) {
+      console.error("Cleanup error:", err);
+      alert("Error cleaning up duplicate tickets.");
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser?.uid) {
@@ -282,11 +349,31 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
     setIsSubmittingTicket(true);
     const ticketCode = generateNextTicketCode(tickets);
 
+    // Validation check for existing duplicate ticket code
+    if (tickets.some(t => t.ticketCode?.trim().toUpperCase() === ticketCode.toUpperCase())) {
+      alert(`Validation Error: Ticket code ${ticketCode} already exists. Please try again.`);
+      setIsSubmittingTicket(false);
+      return;
+    }
+
     const initialHistory: Array<{ note: string; date: string }> = [
       { note: "Ticket created", date: new Date().toISOString() }
     ];
 
     if (navigator.onLine) {
+      try {
+        const qCheck = query(collection(db, "tickets"), where("ticketCode", "==", ticketCode));
+        const serverCheckSnap = await getDocs(qCheck);
+        if (!serverCheckSnap.empty) {
+          setIsSubmittingTicket(false);
+          alert(`⚠️ Duplicate Ticket Detected: Ticket code ${ticketCode} already exists on the server. Please try again.`);
+          fetchTickets();
+          return;
+        }
+      } catch (checkErr) {
+        console.warn("Server-side duplicate check error:", checkErr);
+      }
+
       try {
         const draft = await generateTicketDraftResponse({
           title: newTicket.title,
@@ -522,12 +609,21 @@ export default function SupportTickets({ userRole = "staff", userPermissions }: 
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">Manage IT support requests with local-first offline fallback</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="w-full sm:w-auto px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors cursor-pointer min-h-[44px]"
-        >
-          New Ticket
-        </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={handleCleanupDuplicates}
+            className="w-full sm:w-auto px-3 py-2 text-xs font-semibold bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition-colors cursor-pointer min-h-[44px]"
+            title="Scan and remove duplicate tickets (e.g. TK-0021 / TK-0010)"
+          >
+            Cleanup Duplicates
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full sm:w-auto px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors cursor-pointer min-h-[44px]"
+          >
+            New Ticket
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
