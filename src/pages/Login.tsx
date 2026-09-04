@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 import { motion } from "motion/react";
-import { Shield, Mail, Lock, LogIn } from "lucide-react";
+import { Shield, User, Lock, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Login({ appLogo }: { appLogo?: string | null }) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState("");
@@ -17,12 +18,31 @@ export default function Login({ appLogo }: { appLogo?: string | null }) {
     setLoginError("");
     setIsLoggingIn(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      let loginEmail = identifier.trim();
+
+      // If identifier doesn't contain '@', treat as username and lookup email in Firestore
+      if (!loginEmail.includes('@')) {
+        const usersRef = collection(db, "users");
+        const querySnapshot = await getDocs(usersRef);
+        const found = querySnapshot.docs.find(d => {
+          const data = d.data();
+          return data.username && data.username.toLowerCase() === loginEmail.toLowerCase();
+        });
+        if (found) {
+          loginEmail = found.data().email;
+        } else {
+          setLoginError("User not found with that username");
+          setIsLoggingIn(false);
+          return;
+        }
+      }
+
+      await signInWithEmailAndPassword(auth, loginEmail, password);
       navigate("/");
     } catch (err: any) {
       console.error(err);
       if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
-        setLoginError("Invalid email or password");
+        setLoginError("Invalid username/email or password");
       } else {
         setLoginError("Failed to sign in. Please try again.");
       }
@@ -51,15 +71,15 @@ export default function Login({ appLogo }: { appLogo?: string | null }) {
         
         <form onSubmit={handleCustomLogin} className="space-y-4 mb-6 text-left">
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Work Email</label>
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Username or Work Email</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <User className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input 
-                type="email" 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="text" 
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:text-white transition-all"
-                placeholder="admin@mtkn.com"
+                placeholder="username or email@mtkn.com"
                 required
               />
             </div>
