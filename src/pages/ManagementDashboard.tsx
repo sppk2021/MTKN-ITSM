@@ -240,7 +240,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
           getDocs(collection(db, "users")),
           getDocs(collection(db, "isp_accounts")),
           getDocs(collection(db, "software_licenses")),
-          getDocs(collection(db, "school_projects"))
+          getDocs(collection(db, "it_projects"))
         ]);
         
         const allTickets = ticketsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
