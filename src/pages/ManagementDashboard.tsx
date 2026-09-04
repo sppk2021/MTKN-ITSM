@@ -266,11 +266,18 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
           urgentCount: urgentProjects.length,
         });
 
-        const openTickets = allTickets.filter((t: any) => ["open", "in_progress"].includes(t.status));
-        const criticalTickets = allTickets.filter((t: any) => ["critical", "high"].includes(t.priority) && t.status !== "resolved");
-        const activeRepairs = allRepairs.filter((r: any) => r.status === "ongoing");
-        const activeUsers = allUsers.filter((u: any) => u.status === "active");
-        const issuesISPs = allISPs.filter((i: any) => i.currentStatus !== "online");
+        const openTickets = allTickets.filter((t: any) => {
+          const s = (t.status || '').toLowerCase().trim();
+          return s !== 'resolved' && s !== 'closed';
+        });
+        const criticalTickets = allTickets.filter((t: any) => {
+          const p = (t.priority || '').toLowerCase().trim();
+          const s = (t.status || '').toLowerCase().trim();
+          return (p === 'critical' || p === 'high') && s !== 'resolved' && s !== 'closed';
+        });
+        const activeRepairs = allRepairs.filter((r: any) => (r.status || '').toLowerCase().trim() === "ongoing");
+        const activeUsers = allUsers.filter((u: any) => (u.status || '').toLowerCase().trim() === "active");
+        const issuesISPs = allISPs.filter((i: any) => (i.currentStatus || '').toLowerCase().trim() !== "online");
 
         // Calculate licenses/domains expiring within 30 days
         const expiringSoon = allLicenses.filter((lic: any) => {
@@ -280,11 +287,13 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
         });
 
         // Find critical tickets that are currently unassigned
-        const unassignedCritical = allTickets.filter((t: any) => 
-          ["critical", "high"].includes(t.priority) && 
-          (!t.assigneeId || t.assigneeId === "unassigned" || t.assigneeId === "") &&
-          t.status !== "resolved" && t.status !== "closed"
-        );
+        const unassignedCritical = allTickets.filter((t: any) => {
+          const p = (t.priority || '').toLowerCase().trim();
+          const s = (t.status || '').toLowerCase().trim();
+          return (p === 'critical' || p === 'high') && 
+            (!t.assigneeId || t.assigneeId === "unassigned" || t.assigneeId === "") &&
+            s !== "resolved" && s !== "closed";
+        });
 
         setStats({
           openTickets: openTickets.length,

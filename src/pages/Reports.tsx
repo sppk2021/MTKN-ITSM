@@ -2,6 +2,10 @@ import React, { useEffect, useState, useMemo } from "react";
 import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, handleFirestoreError, OperationType } from "../lib/firebase";
 import { 
+  getTicketsLocal, getRepairsLocal, getIspLocal, getLicensesLocal, getUsersLocal,
+  saveTicketsLocal, saveRepairsLocal, saveIspLocal, saveLicensesLocal, saveUsersLocal
+} from "../lib/offlineStorage";
+import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area 
 } from "recharts";
@@ -46,117 +50,155 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
   const [repairData, setRepairData] = useState<any[]>([]);
   const [ispDowntimeData, setIspDowntimeData] = useState<any[]>([]);
 
+  const processAnalyticsData = (fetchedTickets: any[], fetchedRepairs: any[], fetchedIsps: any[], fetchedLicenses: any[], fetchedUsers: any[]) => {
+    setTickets(fetchedTickets);
+    setRepairs(fetchedRepairs);
+    setIsps(fetchedIsps);
+    setLicenses(fetchedLicenses);
+    setUsers(fetchedUsers);
+
+    // Process tickets by status
+    const tStats: Record<string, number> = { open: 0, in_progress: 0, resolved: 0, closed: 0 };
+    fetchedTickets.forEach((t: any) => { 
+      const s = (t.status || 'open').toLowerCase().trim().replace(/[\s-]/g, '_');
+      if (s in tStats) {
+        tStats[s]++;
+      } else {
+        tStats['open']++;
+      }
+    });
+    setTicketData(Object.keys(tStats).map(key => ({ 
+      name: key.replace('_', ' ').toUpperCase(), 
+      value: tStats[key] 
+    })));
+
+    // Process ISP Downtime
+    const downtimeByISP = fetchedIsps.map((isp: any) => {
+      const totalHours = (isp.downtimeRecords || []).reduce((sum: number, r: any) => {
+        const hrs = parseFloat(r.duration || '0');
+        return sum + (isNaN(hrs) ? 0 : hrs);
+      }, 0);
+      return { name: isp.ispName, hours: parseFloat(totalHours.toFixed(1)) };
+    }).filter(i => i.hours > 0);
+    setIspDowntimeData(downtimeByISP);
+
+    // Process tickets by priority trend
+    const sortedTickets = [...fetchedTickets].sort((a: any, b: any) => {
+      const ad = a.createdAt?.toMillis?.() || (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0) || (a.createdAt ? new Date(a.createdAt).getTime() : 0) || 0;
+      const bd = b.createdAt?.toMillis?.() || (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0) || (b.createdAt ? new Date(b.createdAt).getTime() : 0) || 0;
+      return ad - bd;
+    });
+
+    const pStats: Record<string, any> = {};
+    sortedTickets.forEach(t => { 
+      let dateStr = 'Unknown';
+      if (t.createdAt?.toDate) {
+        dateStr = format(t.createdAt.toDate(), 'MMM dd');
+      } else if (t.createdAt?.seconds) {
+        dateStr = format(new Date(t.createdAt.seconds * 1000), 'MMM dd');
+      } else if (t.createdAt) {
+        try {
+          dateStr = format(new Date(t.createdAt), 'MMM dd');
+        } catch {
+          dateStr = 'Unknown';
+        }
+      }
+      if (!pStats[dateStr]) {
+        pStats[dateStr] = { date: dateStr, low: 0, medium: 0, high: 0, critical: 0, unassigned: 0 };
+      }
+      const p = (t.priority || 'unassigned').toLowerCase().trim();
+      if (p in pStats[dateStr]) {
+        pStats[dateStr][p]++;
+      } else {
+        pStats[dateStr]['low'] = (pStats[dateStr]['low'] || 0) + 1;
+      }
+    });
+    setTicketPriorityData(Object.values(pStats));
+
+    // Process repairs by status
+    const rStats: Record<string, number> = { pending: 0, ongoing: 0, completed: 0 };
+    fetchedRepairs.forEach(r => { 
+      const rs = (r.status || 'pending').toLowerCase().trim();
+      if (rs in rStats) rStats[rs]++; 
+    });
+    setRepairData(Object.keys(rStats).map(key => ({ 
+      name: key.toUpperCase(), 
+      value: rStats[key] 
+    })));
+  };
+
   const fetchAllData = async () => {
     try {
       setLoading(true);
       
-      let fetchedTickets: any[] = [];
-      let fetchedRepairs: any[] = [];
-      let fetchedIsps: any[] = [];
-      let fetchedLicenses: any[] = [];
-      let fetchedUsers: any[] = [];
+      // Load local IndexedDB cache first to minimize Firestore reads
+      const [cachedTickets, cachedRepairs, cachedIsps, cachedLicenses, cachedUsers] = await Promise.all([
+        getTicketsLocal(),
+        getRepairsLocal(),
+        getIspLocal(),
+        getLicensesLocal(),
+        getUsersLocal()
+      ]);
 
-      try {
-        const snap = await getDocs(collection(db, "tickets"));
-        fetchedTickets = snap.docs.map(t => ({ id: t.id, ...t.data() } as any));
-      } catch (err) {
-        console.error("Error loading tickets collection:", err);
+      if (cachedTickets.length > 0 || cachedRepairs.length > 0 || cachedIsps.length > 0) {
+        processAnalyticsData(cachedTickets, cachedRepairs, cachedIsps, cachedLicenses, cachedUsers);
+        setLoading(false);
       }
 
-      try {
-        const snap = await getDocs(collection(db, "repairs"));
-        fetchedRepairs = snap.docs.map(r => ({ id: r.id, ...r.data() } as any));
-      } catch (err) {
-        console.error("Error loading repairs collection:", err);
-      }
+      if (navigator.onLine) {
+        let fetchedTickets: any[] = [];
+        let fetchedRepairs: any[] = [];
+        let fetchedIsps: any[] = [];
+        let fetchedLicenses: any[] = [];
+        let fetchedUsers: any[] = [];
 
-      try {
-        const snap = await getDocs(collection(db, "isp_accounts"));
-        fetchedIsps = snap.docs.map(i => ({ id: i.id, ...i.data() } as any));
-      } catch (err) {
-        console.error("Error loading isp_accounts collection:", err);
-      }
-
-      try {
-        const snap = await getDocs(collection(db, "software_licenses"));
-        fetchedLicenses = snap.docs.map(l => ({ id: l.id, ...l.data() } as any));
-      } catch (err) {
-        console.error("Error loading software_licenses collection:", err);
-      }
-
-      try {
-        const snap = await getDocs(collection(db, "users"));
-        fetchedUsers = snap.docs.map(u => ({ id: u.id, ...u.data() } as any));
-      } catch (err) {
-        console.error("Error loading users collection:", err);
-      }
-
-
-      setTickets(fetchedTickets);
-      setRepairs(fetchedRepairs);
-      setIsps(fetchedIsps);
-      setLicenses(fetchedLicenses);
-      setUsers(fetchedUsers);
-
-      // Process tickets by status
-      const tStats: Record<string, number> = { open: 0, in_progress: 0, resolved: 0, closed: 0 };
-      fetchedTickets.forEach((t: any) => { 
-        if (t.status in tStats) tStats[t.status]++; 
-      });
-      setTicketData(Object.keys(tStats).map(key => ({ 
-        name: key.replace('_', ' ').toUpperCase(), 
-        value: tStats[key] 
-      })));
-
-      // Process ISP Downtime
-      const downtimeByISP = fetchedIsps.map((isp: any) => {
-        const totalHours = (isp.downtimeRecords || []).reduce((sum: number, r: any) => {
-          const hrs = parseFloat(r.duration || '0');
-          return sum + (isNaN(hrs) ? 0 : hrs);
-        }, 0);
-        return { name: isp.ispName, hours: parseFloat(totalHours.toFixed(1)) };
-      }).filter(i => i.hours > 0);
-      setIspDowntimeData(downtimeByISP);
-
-      // Process tickets by priority trend
-      const sortedTickets = [...fetchedTickets].sort((a: any, b: any) => {
-        const ad = a.createdAt?.toMillis?.() || (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0) || (a.createdAt ? new Date(a.createdAt).getTime() : 0) || 0;
-        const bd = b.createdAt?.toMillis?.() || (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0) || (b.createdAt ? new Date(b.createdAt).getTime() : 0) || 0;
-        return ad - bd;
-      });
-
-      const pStats: Record<string, any> = {};
-      sortedTickets.forEach(t => { 
-        let dateStr = 'Unknown';
-        if (t.createdAt?.toDate) {
-          dateStr = format(t.createdAt.toDate(), 'MMM dd');
-        } else if (t.createdAt?.seconds) {
-          dateStr = format(new Date(t.createdAt.seconds * 1000), 'MMM dd');
-        } else if (t.createdAt) {
-          try {
-            dateStr = format(new Date(t.createdAt), 'MMM dd');
-          } catch {
-            dateStr = 'Unknown';
-          }
+        try {
+          const snap = await getDocs(collection(db, "tickets"));
+          fetchedTickets = snap.docs.map(t => ({ id: t.id, ...t.data() } as any));
+          await saveTicketsLocal(fetchedTickets);
+        } catch (err) {
+          console.error("Error loading tickets collection:", err);
+          fetchedTickets = cachedTickets;
         }
-        if (!pStats[dateStr]) {
-          pStats[dateStr] = { date: dateStr, low: 0, medium: 0, high: 0, critical: 0, unassigned: 0 };
+
+        try {
+          const snap = await getDocs(collection(db, "repairs"));
+          fetchedRepairs = snap.docs.map(r => ({ id: r.id, ...r.data() } as any));
+          await saveRepairsLocal(fetchedRepairs);
+        } catch (err) {
+          console.error("Error loading repairs collection:", err);
+          fetchedRepairs = cachedRepairs;
         }
-        const p = t.priority || 'unassigned';
-        pStats[dateStr][p] = (pStats[dateStr][p] || 0) + 1;
-      });
-      setTicketPriorityData(Object.values(pStats));
 
-      // Process repairs by status
-      const rStats: Record<string, number> = { pending: 0, ongoing: 0, completed: 0 };
-      fetchedRepairs.forEach(r => { 
-        if (r.status in rStats) rStats[r.status]++; 
-      });
-      setRepairData(Object.keys(rStats).map(key => ({ 
-        name: key.toUpperCase(), 
-        value: rStats[key] 
-      })));
+        try {
+          const snap = await getDocs(collection(db, "isp_accounts"));
+          fetchedIsps = snap.docs.map(i => ({ id: i.id, ...i.data() } as any));
+          await saveIspLocal(fetchedIsps);
+        } catch (err) {
+          console.error("Error loading isp_accounts collection:", err);
+          fetchedIsps = cachedIsps;
+        }
 
+        try {
+          const snap = await getDocs(collection(db, "software_licenses"));
+          fetchedLicenses = snap.docs.map(l => ({ id: l.id, ...l.data() } as any));
+          await saveLicensesLocal(fetchedLicenses);
+        } catch (err) {
+          console.error("Error loading software_licenses collection:", err);
+          fetchedLicenses = cachedLicenses;
+        }
+
+        try {
+          const snap = await getDocs(collection(db, "users"));
+          fetchedUsers = snap.docs.map(u => ({ id: u.id, ...u.data() } as any));
+          await saveUsersLocal(fetchedUsers);
+        } catch (err) {
+          console.error("Error loading users collection:", err);
+          fetchedUsers = cachedUsers;
+        }
+
+        processAnalyticsData(fetchedTickets, fetchedRepairs, fetchedIsps, fetchedLicenses, fetchedUsers);
+      }
     } catch (e) {
       console.error("Error processing fetched data:", e);
     } finally {
@@ -191,10 +233,17 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
   // Derived KPI Metrics
   const metrics = useMemo(() => {
     const totalT = tickets.length;
-    const resolvedT = tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length;
+    const resolvedT = tickets.filter(t => {
+      const s = (t.status || '').toLowerCase().trim();
+      return s === 'resolved' || s === 'closed';
+    }).length;
+    const activeT = tickets.filter(t => {
+      const s = (t.status || '').toLowerCase().trim();
+      return s !== 'resolved' && s !== 'closed';
+    }).length;
     const resolutionRate = totalT ? Math.round((resolvedT / totalT) * 100) : 0;
     
-    const activeRepairsCount = repairs.filter(r => r.status === 'ongoing').length;
+    const activeRepairsCount = repairs.filter(r => (r.status || '').toLowerCase().trim() === 'ongoing').length;
     
     const totalDowntimeHrs = isps.reduce((acc, isp) => {
       const records = isp.downtimeRecords || [];
@@ -208,11 +257,16 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
       return days >= 0 && days <= 30;
     }).length;
 
-    const criticalTicketsCount = tickets.filter(t => t.priority === 'critical' && t.status !== 'resolved').length;
+    const criticalTicketsCount = tickets.filter(t => {
+      const p = (t.priority || '').toLowerCase().trim();
+      const s = (t.status || '').toLowerCase().trim();
+      return (p === 'critical' || p === 'high') && s !== 'resolved' && s !== 'closed';
+    }).length;
 
     return {
       totalT,
       resolvedT,
+      activeT,
       resolutionRate,
       activeRepairsCount,
       totalDowntimeHrs: parseFloat(totalDowntimeHrs.toFixed(1)),
@@ -361,10 +415,10 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 <div className="absolute right-0 top-0 h-12 w-12 bg-blue-50 rounded-bl-3xl flex items-center justify-center">
                   <Ticket className="w-5 h-5 text-blue-500" />
                 </div>
-                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Support Tickets</p>
-                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.totalT}</p>
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Tickets</p>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.activeT}</p>
                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Resolution Rate:</span>
+                  <span>Total: {metrics.totalT} • Resolved</span>
                   <span className="font-bold text-emerald-600">{metrics.resolutionRate}%</span>
                 </div>
               </div>
