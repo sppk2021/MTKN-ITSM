@@ -49,6 +49,11 @@ export default function ProjectDetailView({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Edit Project Info Modal state
+  const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<Partial<ITProject>>({});
+  const [isSavingProjectInfo, setIsSavingProjectInfo] = useState(false);
+
   // New activity input
   const [newActivityText, setNewActivityText] = useState('');
 
@@ -257,6 +262,27 @@ export default function ProjectDetailView({
               />
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setEditFormData({
+                name: project.name || project.title || '',
+                client: project.client || project.department || '',
+                projectType: project.projectType || '',
+                projectOwner: project.projectOwner || '',
+                priority: project.priority || 'medium',
+                startDate: project.startDate || '',
+                targetDate: project.targetDate || project.targetEndDate || ''
+              });
+              setIsEditProjectOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-white dark:hover:text-white bg-blue-50 hover:bg-blue-600 dark:bg-blue-950/40 dark:hover:bg-blue-600 border border-blue-200 dark:border-blue-900/60 rounded-xl transition-all duration-150 shadow-xs cursor-pointer group"
+            title="Edit Project Info"
+          >
+            <Edit3 className="w-4 h-4 text-blue-500 group-hover:text-white transition-colors" />
+            <span className="font-semibold">Edit Info</span>
+          </button>
 
           {canDelete && (
             <button
@@ -750,6 +776,144 @@ export default function ProjectDetailView({
           </div>
         </div>
       )}
+
+      {/* Edit Project Info Modal */}
+      {isEditProjectOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-blue-500" /> Edit Project Details
+              </h2>
+            </div>
+            
+            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Project Title <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={editFormData.name || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Client / Department <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={editFormData.client || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, client: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Owner / Lead</label>
+                  <input
+                    type="text"
+                    value={editFormData.projectOwner || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, projectOwner: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Priority</label>
+                  <select
+                    value={editFormData.priority || 'medium'}
+                    onChange={(e) => setEditFormData({ ...editFormData, priority: e.target.value as any })}
+                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority</option>
+                    <option value="critical">Critical Priority</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Project Tag / Type</label>
+                <input
+                  type="text"
+                  value={editFormData.projectType || ''}
+                  placeholder="e.g. Website, LMS, Internal..."
+                  onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={editFormData.startDate || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Target Date</label>
+                  <input
+                    type="date"
+                    value={editFormData.targetDate || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, targetDate: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 shrink-0 flex justify-end gap-3 bg-slate-50 dark:bg-slate-800/80">
+              <button
+                type="button"
+                onClick={() => setIsEditProjectOpen(false)}
+                disabled={isSavingProjectInfo}
+                className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSavingProjectInfo || !editFormData.name?.trim() || !editFormData.client?.trim()}
+                onClick={async () => {
+                  try {
+                    setIsSavingProjectInfo(true);
+                    const updatedInfo: Partial<ITProject> = {
+                      name: editFormData.name,
+                      title: editFormData.name, // sync alias
+                      client: editFormData.client,
+                      department: editFormData.client, // sync alias
+                      projectType: editFormData.projectType,
+                      projectOwner: editFormData.projectOwner,
+                      priority: editFormData.priority as any,
+                      startDate: editFormData.startDate,
+                      targetDate: editFormData.targetDate,
+                      targetEndDate: editFormData.targetDate, // sync alias
+                    };
+                    await handleUpdateProject({ ...project, ...updatedInfo } as ITProject);
+                    setIsEditProjectOpen(false);
+                  } catch (err) {
+                    console.error("Failed to save project info", err);
+                  } finally {
+                    setIsSavingProjectInfo(false);
+                  }
+                }}
+                className="flex items-center gap-2 px-6 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isSavingProjectInfo ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
