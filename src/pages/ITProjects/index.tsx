@@ -16,6 +16,8 @@ export default function ITProjectsManager({ userRole, userPermissions }: ClientP
       <ProjectDetailView 
         project={selectedProject} 
         onBack={() => setSelectedProject(null)} 
+        userRole={userRole}
+        userPermissions={userPermissions}
       />
     );
   }
@@ -23,6 +25,8 @@ export default function ITProjectsManager({ userRole, userPermissions }: ClientP
   return (
     <PortfolioView 
       onSelectProject={setSelectedProject} 
+      userRole={userRole}
+      userPermissions={userPermissions}
     />
   );
 }

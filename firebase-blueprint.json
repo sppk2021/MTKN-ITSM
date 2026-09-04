@@ -144,9 +144,36 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["timestamp", "subject", "body", "recipients", "type", "status", "createdAt"]
+    },
+    "ITProject": {
+      "title": "ITProject",
+      "description": "IT Project and solution tracker with phases and tasks",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "client": { "type": "string" },
+        "department": { "type": "string" },
+        "projectType": { "type": "string" },
+        "projectOwner": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "string" },
+        "currentStep": { "type": "string" },
+        "nextAction": { "type": "string" },
+        "startDate": { "type": "string" },
+        "targetDate": { "type": "string" },
+        "targetEndDate": { "type": "string" },
+        "phases": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
+    "/it_projects/{projectId}": {
+      "schema": { "$ref": "#/entities/ITProject" },
+      "description": "Stores IT projects and solution tracking records."
+    },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "Stores user profiles including their system role."

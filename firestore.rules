@@ -156,9 +156,9 @@ service cloud.firestore {
 
     // ITProject validation
     function isValidITProject(data) {
-      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
-             data.department is string &&
-             data.status is string && data.status in ['draft', 'active', 'on_hold', 'completed', 'cancelled'] &&
+      return (('name' in data && data.name is string && data.name.size() > 0 && data.name.size() <= 200) ||
+              ('title' in data && data.title is string && data.title.size() > 0 && data.title.size() <= 200)) &&
+             (!('status' in data) || (data.status is string && data.status in ['not_started', 'draft', 'active', 'on_hold', 'blocked', 'waiting', 'completed', 'cancelled'])) &&
              (!('description' in data) || data.description is string) &&
              (!('phases' in data) || data.phases is list) &&
              (!('budget' in data) || data.budget is map) &&
@@ -166,8 +166,7 @@ service cloud.firestore {
              (!('issues' in data) || data.issues is list) &&
              (!('changeRequests' in data) || data.changeRequests is list) &&
              (!('documents' in data) || data.documents is list) &&
-             (!('milestones' in data) || data.milestones is list) &&
-             data.keys().hasAll(['title', 'department', 'status', 'createdAt', 'updatedAt']);
+             (!('milestones' in data) || data.milestones is list);
     }
 
     match /users/{userId} {
@@ -246,9 +245,9 @@ service cloud.firestore {
 
     match /it_projects/{projectId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && isValidITProject(incoming()) && incoming().createdAt == request.time;
-      allow update: if isSignedIn() && isValidId(projectId) && isValidITProject(incoming()) && incoming().updatedAt == request.time;
-      allow delete: if isManagement();
+      allow create: if isSignedIn() && isValidITProject(incoming());
+      allow update: if isSignedIn() && isValidId(projectId) && isValidITProject(incoming());
+      allow delete: if isSignedIn() && isValidId(projectId);
     }
   }
 }

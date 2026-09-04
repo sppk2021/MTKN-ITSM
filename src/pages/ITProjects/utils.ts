@@ -1,135 +1,301 @@
-import { ITProject, ProjectHealth } from './types';
+import { ITProject, TaskStatus, ProjectHealth, ProcessStep } from './types';
 import { differenceInDays } from 'date-fns';
 
-export function calculateProjectMetrics(project: ITProject) {
-  let totalTasks = 0;
-  let completedTasks = 0;
+export interface TaskCounts {
+  total: number;
+  completed: number;
+  inProgress: number;
+  waiting: number;
+  reviewQa: number;
+  onHold: number;
+  blocked: number;
+  notStarted: number;
+  cancelled: number;
+}
 
-  if (project.phases) {
+export const STATUS_CONFIG: Record<TaskStatus, {
+  label: string;
+  badgeClass: string;
+  borderClass: string;
+  dotColor: string;
+  emoji: string;
+}> = {
+  not_started: {
+    label: 'Not Started',
+    badgeClass: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    borderClass: 'border-slate-300 dark:border-slate-700',
+    dotColor: 'bg-slate-400',
+    emoji: '⚪'
+  },
+  in_progress: {
+    label: 'In Progress',
+    badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    borderClass: 'border-blue-300 dark:border-blue-700',
+    dotColor: 'bg-blue-500',
+    emoji: '🔵'
+  },
+  waiting: {
+    label: 'Waiting',
+    badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+    borderClass: 'border-amber-300 dark:border-amber-700',
+    dotColor: 'bg-amber-500',
+    emoji: '🟡'
+  },
+  review_qa: {
+    label: 'Review / QA',
+    badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
+    borderClass: 'border-purple-300 dark:border-purple-700',
+    dotColor: 'bg-purple-500',
+    emoji: '🟣'
+  },
+  completed: {
+    label: 'Completed',
+    badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+    borderClass: 'border-emerald-300 dark:border-emerald-700',
+    dotColor: 'bg-emerald-500',
+    emoji: '🟢'
+  },
+  on_hold: {
+    label: 'On Hold',
+    badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+    borderClass: 'border-amber-300 dark:border-amber-700',
+    dotColor: 'bg-amber-500',
+    emoji: '⏸️'
+  },
+  blocked: {
+    label: 'On Hold',
+    badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+    borderClass: 'border-amber-300 dark:border-amber-700',
+    dotColor: 'bg-amber-500',
+    emoji: '⏸️'
+  },
+  cancelled: {
+    label: 'Cancelled',
+    badgeClass: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
+    borderClass: 'border-slate-400 dark:border-slate-600',
+    dotColor: 'bg-slate-600',
+    emoji: '⚫'
+  }
+};
+
+/**
+ * Calculates exact task progress % and task counts across all steps & subtasks
+ * Formula: Progress = Completed Tasks ÷ Total Tasks × 100
+ */
+export function calculateProjectMetrics(project: ITProject) {
+  const counts: TaskCounts = {
+    total: 0,
+    completed: 0,
+    inProgress: 0,
+    waiting: 0,
+    reviewQa: 0,
+    onHold: 0,
+    blocked: 0,
+    notStarted: 0,
+    cancelled: 0
+  };
+
+  const allSteps: ProcessStep[] = [];
+  const blockedItems: Array<{
+    stepId: string;
+    stepTitle: string;
+    phaseName: string;
+    status: 'blocked' | 'waiting' | 'on_hold';
+    reason: string;
+    personResponsible?: string;
+  }> = [];
+
+  if (project.phases && Array.isArray(project.phases)) {
     project.phases.forEach(phase => {
-      if (phase.tasks) {
-        phase.tasks.forEach(task => {
-          totalTasks++;
-          if (task.status === 'completed') {
-            completedTasks++;
-          }
-        });
-      }
+      const steps = phase.steps || (phase.tasks as any) || [];
+      steps.forEach((step: ProcessStep) => {
+        allSteps.push(step);
+
+        // Check if step is on_hold, blocked or waiting
+        if (step.status === 'blocked' || step.status === 'on_hold' || step.status === 'waiting') {
+          blockedItems.push({
+            stepId: step.id,
+            stepTitle: step.title,
+            phaseName: phase.name,
+            status: (step.status === 'blocked' ? 'on_hold' : step.status) as any,
+            reason: step.blockedReason || (step.status === 'waiting' ? 'Waiting for external input' : 'Task on hold'),
+            personResponsible: step.personResponsible
+          });
+        }
+
+        // Subtask breakdown
+        if (step.subtasks && step.subtasks.length > 0) {
+          step.subtasks.forEach(sub => {
+            counts.total++;
+            if (sub.completed) {
+              counts.completed++;
+            } else {
+              // Map to step's active status
+              if (step.status === 'in_progress') counts.inProgress++;
+              else if (step.status === 'waiting') counts.waiting++;
+              else if (step.status === 'review_qa') counts.reviewQa++;
+              else if (step.status === 'on_hold' || step.status === 'blocked') { counts.onHold++; counts.blocked++; }
+              else counts.notStarted++;
+            }
+          });
+        } else {
+          // If no subtasks, count the step itself as a task unit
+          counts.total++;
+          if (step.status === 'completed') counts.completed++;
+          else if (step.status === 'in_progress') counts.inProgress++;
+          else if (step.status === 'waiting') counts.waiting++;
+          else if (step.status === 'review_qa') counts.reviewQa++;
+          else if (step.status === 'on_hold' || step.status === 'blocked') { counts.onHold++; counts.blocked++; }
+          else if (step.status === 'cancelled') counts.cancelled++;
+          else counts.notStarted++;
+        }
+      });
     });
   }
 
-  const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (project.progressPercent || 0);
+  // Progress percentage = Completed ÷ Total × 100
+  const progressPercent = counts.total > 0 
+    ? Math.round((counts.completed / counts.total) * 100) 
+    : (project.progressPercent || 0);
 
-  const targetEnd = new Date(project.targetEndDate);
+  // Target date & overdue analysis
+  const targetDateStr = project.targetDate || project.targetEndDate;
   const now = new Date();
-  const daysUntilEnd = differenceInDays(targetEnd, now);
-  const isOverdue = daysUntilEnd < 0 && progressPercent < 100;
-  const overdueDays = isOverdue ? Math.abs(daysUntilEnd) : 0;
+  let daysUntilEnd = 999;
+  let isOverdue = false;
+  let overdueDays = 0;
 
-  const openRisks = (project.risks || []).filter(r => r.status === 'Open');
-  const highOpenRisks = openRisks.filter(r => r.impact === 'High').length;
-  const mediumOpenRisks = openRisks.filter(r => r.impact === 'Medium').length;
-
-  const openIssues = (project.issues || []).filter(i => i.status === 'Open');
-  const criticalOpenIssues = openIssues.filter(i => i.severity === 'Critical').length;
-  const highOpenIssues = openIssues.filter(i => i.severity === 'High').length;
-  const mediumOpenIssues = openIssues.filter(i => i.severity === 'Medium').length;
-
-  // Milestones variance analysis
-  const milestones = project.milestones || [];
-  let delayedMilestonesCount = 0;
-  let maxMilestoneDelayDays = 0;
-
-  milestones.forEach(m => {
-    if (m.status !== 'completed') {
-      const planned = new Date(m.plannedDate);
-      const forecast = new Date(m.forecastDate);
-      const variance = differenceInDays(forecast, planned);
-      if (variance > 0) {
-        delayedMilestonesCount++;
-        if (variance > maxMilestoneDelayDays) {
-          maxMilestoneDelayDays = variance;
-        }
+  if (targetDateStr) {
+    try {
+      const targetDate = new Date(targetDateStr);
+      daysUntilEnd = differenceInDays(targetDate, now);
+      if (daysUntilEnd < 0 && progressPercent < 100 && project.status !== 'completed' && project.status !== 'cancelled') {
+        isOverdue = true;
+        overdueDays = Math.abs(daysUntilEnd);
       }
+    } catch {
+      // ignore
     }
-  });
+  }
 
-  // Change Requests analysis
-  const changeRequests = project.changeRequests || [];
-  const pendingCRs = changeRequests.filter(cr => cr.status === 'Requested' || cr.status === 'Under Review');
-  const approvedCRs = changeRequests.filter(cr => cr.status === 'Approved' || cr.status === 'Implemented');
-  const totalApprovedBudgetImpact = approvedCRs.reduce((acc, cr) => acc + (cr.budgetImpact || 0), 0);
-  const totalApprovedTimelineImpactDays = approvedCRs.reduce((acc, cr) => acc + (cr.timelineImpactDays || 0), 0);
-
+  // Health assessment
   let health: ProjectHealth = 'green';
   const insights: string[] = [];
 
-  // Rules for RED
-  if (criticalOpenIssues > 0) {
+  if (counts.onHold > 0 || counts.blocked > 0) {
     health = 'red';
-    insights.push(`${criticalOpenIssues} critical issue(s) open`);
+    const holdCount = counts.onHold || counts.blocked;
+    insights.push(`${holdCount} task(s) currently on hold`);
   }
   if (isOverdue) {
     health = 'red';
     insights.push(`Project is overdue by ${overdueDays} day(s)`);
   }
-  if (maxMilestoneDelayDays > 14) {
-    health = 'red';
-    insights.push(`Critical milestone schedule slippage (+${maxMilestoneDelayDays} days forecast delay)`);
-  }
-  if (highOpenRisks > 2) {
-    health = 'red';
-    insights.push(`Too many high-impact risks (${highOpenRisks})`);
-  }
 
-  // Rules for AMBER (if not already RED)
   if (health !== 'red') {
-    if (highOpenIssues > 0) {
+    if (counts.waiting > 0) {
       health = 'amber';
-      insights.push(`${highOpenIssues} high severity issue(s) open`);
-    } else if (maxMilestoneDelayDays > 0) {
-      health = 'amber';
-      insights.push(`${delayedMilestonesCount} milestone(s) forecasted with delay (+${maxMilestoneDelayDays}d max)`);
-    } else if (highOpenRisks > 0) {
-      health = 'amber';
-      insights.push(`${highOpenRisks} high impact risk(s) open`);
+      insights.push(`${counts.waiting} task(s) in waiting state`);
     } else if (daysUntilEnd <= 7 && daysUntilEnd >= 0 && progressPercent < 80) {
       health = 'amber';
-      insights.push(`Target end in ${daysUntilEnd} days but progress is only ${progressPercent}%`);
-    } else if (pendingCRs.length > 2) {
-      health = 'amber';
-      insights.push(`${pendingCRs.length} pending scope change request(s) awaiting approval`);
-    } else if (mediumOpenIssues > 3 || mediumOpenRisks > 3) {
-      health = 'amber';
-      insights.push(`High volume of medium-priority risks/issues`);
+      insights.push(`Target deadline in ${daysUntilEnd} day(s), progress is ${progressPercent}%`);
     }
   }
 
-  // Default to GREEN if no warnings
   if (health === 'green') {
-    insights.push('Schedule and milestones are on track');
-    insights.push('No blocking issues or critical risks');
+    insights.push('All active phases and steps are on track');
   }
 
-  return { 
-    health, 
-    progressPercent, 
+  return {
+    progressPercent,
+    counts,
+    health,
+    isOverdue,
     overdueDays,
     daysUntilEnd,
-    isOverdue,
     insights,
-    metrics: {
-      totalTasks,
-      completedTasks,
-      openRisks: openRisks.length,
-      openIssues: openIssues.length,
-      delayedMilestonesCount,
-      maxMilestoneDelayDays,
-      pendingCRsCount: pendingCRs.length,
-      approvedCRsCount: approvedCRs.length,
-      totalApprovedBudgetImpact,
-      totalApprovedTimelineImpactDays
-    }
+    allSteps,
+    blockedItems
   };
 }
 
+/**
+ * Extracts "What have I done?", "What am I doing now?", "What remains?", and "What is blocked?"
+ */
+export function extractWhatRemains(project: ITProject) {
+  const completed: Array<{ id: string; title: string; phase: string; type: 'step' | 'subtask' }> = [];
+  const current: Array<{ id: string; title: string; phase: string; details?: string }> = [];
+  const remaining: Array<{ id: string; title: string; phase: string; status: TaskStatus }> = [];
+  const blocked: Array<{ id: string; title: string; phase: string; status: 'blocked' | 'on_hold' | 'waiting'; reason: string }> = [];
+
+  if (project.phases && Array.isArray(project.phases)) {
+    project.phases.forEach(phase => {
+      const steps = phase.steps || (phase.tasks as any) || [];
+      steps.forEach((step: ProcessStep) => {
+        if (step.status === 'completed') {
+          completed.push({
+            id: step.id,
+            title: step.title,
+            phase: phase.name,
+            type: 'step'
+          });
+        } else if (step.status === 'blocked' || step.status === 'on_hold' || step.status === 'waiting') {
+          blocked.push({
+            id: step.id,
+            title: step.title,
+            phase: phase.name,
+            status: step.status === 'blocked' ? 'on_hold' : step.status,
+            reason: step.blockedReason || (step.status === 'waiting' ? 'Waiting for external input' : 'Task on hold')
+          });
+          remaining.push({
+            id: step.id,
+            title: step.title,
+            phase: phase.name,
+            status: step.status
+          });
+        } else if (step.status === 'in_progress') {
+          current.push({
+            id: step.id,
+            title: step.title,
+            phase: phase.name,
+            details: step.description
+          });
+          remaining.push({
+            id: step.id,
+            title: step.title,
+            phase: phase.name,
+            status: step.status
+          });
+        } else {
+          remaining.push({
+            id: step.id,
+            title: step.title,
+            phase: phase.name,
+            status: step.status
+          });
+        }
+
+        // Check subtasks for completed list
+        if (step.subtasks) {
+          step.subtasks.forEach(st => {
+            if (st.completed) {
+              completed.push({
+                id: st.id,
+                title: st.title,
+                phase: `${phase.name} → ${step.title}`,
+                type: 'subtask'
+              });
+            }
+          });
+        }
+      });
+    });
+  }
+
+  return {
+    completed,
+    current,
+    remaining,
+    blocked
+  };
+}
