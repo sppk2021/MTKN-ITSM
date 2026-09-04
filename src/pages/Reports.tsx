@@ -1,10 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { useAppData } from "../hooks/useAppData";
 import { auth, db, handleFirestoreError, OperationType } from "../lib/firebase";
-import { 
-  getTicketsLocal, getRepairsLocal, getIspLocal, getLicensesLocal, getUsersLocal,
-  saveTicketsLocal, saveRepairsLocal, saveIspLocal, saveLicensesLocal, saveUsersLocal
-} from "../lib/offlineStorage";
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area 
@@ -32,17 +28,10 @@ interface ReportsProps {
 }
 
 export default function Reports({ userRole = 'staff', userPermissions }: ReportsProps = {}) {
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [repairs, setRepairs] = useState<any[]>([]);
-  const [isps, setIsps] = useState<any[]>([]);
-  const [licenses, setLicenses] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const { tickets, repairs, isps, licenses, users, loading, refreshData } = useAppData();
   
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'tickets' | 'repairs' | 'isps' | 'licenses' | 'email_alerts'>('tickets');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Email Alerts settings and log states
 
   // Process data for charts
   const [ticketData, setTicketData] = useState<any[]>([]);
@@ -50,165 +39,81 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
   const [repairData, setRepairData] = useState<any[]>([]);
   const [ispDowntimeData, setIspDowntimeData] = useState<any[]>([]);
 
-  const processAnalyticsData = (fetchedTickets: any[], fetchedRepairs: any[], fetchedIsps: any[], fetchedLicenses: any[], fetchedUsers: any[]) => {
-    setTickets(fetchedTickets);
-    setRepairs(fetchedRepairs);
-    setIsps(fetchedIsps);
-    setLicenses(fetchedLicenses);
-    setUsers(fetchedUsers);
-
-    // Process tickets by status
-    const tStats: Record<string, number> = { open: 0, in_progress: 0, resolved: 0, closed: 0 };
-    fetchedTickets.forEach((t: any) => { 
-      const s = (t.status || 'open').toLowerCase().trim().replace(/[\s-]/g, '_');
-      if (s in tStats) {
-        tStats[s]++;
-      } else {
-        tStats['open']++;
-      }
-    });
-    setTicketData(Object.keys(tStats).map(key => ({ 
-      name: key.replace('_', ' ').toUpperCase(), 
-      value: tStats[key] 
-    })));
-
-    // Process ISP Downtime
-    const downtimeByISP = fetchedIsps.map((isp: any) => {
-      const totalHours = (isp.downtimeRecords || []).reduce((sum: number, r: any) => {
-        const hrs = parseFloat(r.duration || '0');
-        return sum + (isNaN(hrs) ? 0 : hrs);
-      }, 0);
-      return { name: isp.ispName, hours: parseFloat(totalHours.toFixed(1)) };
-    }).filter(i => i.hours > 0);
-    setIspDowntimeData(downtimeByISP);
-
-    // Process tickets by priority trend
-    const sortedTickets = [...fetchedTickets].sort((a: any, b: any) => {
-      const ad = a.createdAt?.toMillis?.() || (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0) || (a.createdAt ? new Date(a.createdAt).getTime() : 0) || 0;
-      const bd = b.createdAt?.toMillis?.() || (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0) || (b.createdAt ? new Date(b.createdAt).getTime() : 0) || 0;
-      return ad - bd;
-    });
-
-    const pStats: Record<string, any> = {};
-    sortedTickets.forEach(t => { 
-      let dateStr = 'Unknown';
-      if (t.createdAt?.toDate) {
-        dateStr = format(t.createdAt.toDate(), 'MMM dd');
-      } else if (t.createdAt?.seconds) {
-        dateStr = format(new Date(t.createdAt.seconds * 1000), 'MMM dd');
-      } else if (t.createdAt) {
-        try {
-          dateStr = format(new Date(t.createdAt), 'MMM dd');
-        } catch {
-          dateStr = 'Unknown';
-        }
-      }
-      if (!pStats[dateStr]) {
-        pStats[dateStr] = { date: dateStr, low: 0, medium: 0, high: 0, critical: 0, unassigned: 0 };
-      }
-      const p = (t.priority || 'unassigned').toLowerCase().trim();
-      if (p in pStats[dateStr]) {
-        pStats[dateStr][p]++;
-      } else {
-        pStats[dateStr]['low'] = (pStats[dateStr]['low'] || 0) + 1;
-      }
-    });
-    setTicketPriorityData(Object.values(pStats));
-
-    // Process repairs by status
-    const rStats: Record<string, number> = { pending: 0, ongoing: 0, completed: 0 };
-    fetchedRepairs.forEach(r => { 
-      const rs = (r.status || 'pending').toLowerCase().trim();
-      if (rs in rStats) rStats[rs]++; 
-    });
-    setRepairData(Object.keys(rStats).map(key => ({ 
-      name: key.toUpperCase(), 
-      value: rStats[key] 
-    })));
-  };
-
-  const fetchAllData = async () => {
-    try {
-      setLoading(true);
-      
-      // Load local IndexedDB cache first to minimize Firestore reads
-      const [cachedTickets, cachedRepairs, cachedIsps, cachedLicenses, cachedUsers] = await Promise.all([
-        getTicketsLocal(),
-        getRepairsLocal(),
-        getIspLocal(),
-        getLicensesLocal(),
-        getUsersLocal()
-      ]);
-
-      if (cachedTickets.length > 0 || cachedRepairs.length > 0 || cachedIsps.length > 0) {
-        processAnalyticsData(cachedTickets, cachedRepairs, cachedIsps, cachedLicenses, cachedUsers);
-        setLoading(false);
-      }
-
-      if (navigator.onLine) {
-        let fetchedTickets: any[] = [];
-        let fetchedRepairs: any[] = [];
-        let fetchedIsps: any[] = [];
-        let fetchedLicenses: any[] = [];
-        let fetchedUsers: any[] = [];
-
-        try {
-          const snap = await getDocs(collection(db, "tickets"));
-          fetchedTickets = snap.docs.map(t => ({ id: t.id, ...t.data() } as any));
-          await saveTicketsLocal(fetchedTickets);
-        } catch (err) {
-          console.error("Error loading tickets collection:", err);
-          fetchedTickets = cachedTickets;
-        }
-
-        try {
-          const snap = await getDocs(collection(db, "repairs"));
-          fetchedRepairs = snap.docs.map(r => ({ id: r.id, ...r.data() } as any));
-          await saveRepairsLocal(fetchedRepairs);
-        } catch (err) {
-          console.error("Error loading repairs collection:", err);
-          fetchedRepairs = cachedRepairs;
-        }
-
-        try {
-          const snap = await getDocs(collection(db, "isp_accounts"));
-          fetchedIsps = snap.docs.map(i => ({ id: i.id, ...i.data() } as any));
-          await saveIspLocal(fetchedIsps);
-        } catch (err) {
-          console.error("Error loading isp_accounts collection:", err);
-          fetchedIsps = cachedIsps;
-        }
-
-        try {
-          const snap = await getDocs(collection(db, "software_licenses"));
-          fetchedLicenses = snap.docs.map(l => ({ id: l.id, ...l.data() } as any));
-          await saveLicensesLocal(fetchedLicenses);
-        } catch (err) {
-          console.error("Error loading software_licenses collection:", err);
-          fetchedLicenses = cachedLicenses;
-        }
-
-        try {
-          const snap = await getDocs(collection(db, "users"));
-          fetchedUsers = snap.docs.map(u => ({ id: u.id, ...u.data() } as any));
-          await saveUsersLocal(fetchedUsers);
-        } catch (err) {
-          console.error("Error loading users collection:", err);
-          fetchedUsers = cachedUsers;
-        }
-
-        processAnalyticsData(fetchedTickets, fetchedRepairs, fetchedIsps, fetchedLicenses, fetchedUsers);
-      }
-    } catch (e) {
-      console.error("Error processing fetched data:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchAllData();
-  }, []);
+    if (tickets.length > 0 || repairs.length > 0 || isps.length > 0) {
+      // Process tickets by status with robust resolved matching
+      const tStats: Record<string, number> = { open: 0, in_progress: 0, resolved: 0, closed: 0 };
+      tickets.forEach((t: any) => { 
+        let s = (t.status || 'open').toLowerCase().trim().replace(/[\s-]/g, '_');
+        if (s === 'completed' || s === 'fixed' || s === 'done' || !!t.resolvedAt) {
+          s = 'resolved';
+        }
+        if (s in tStats) {
+          tStats[s]++;
+        } else {
+          tStats['open']++;
+        }
+      });
+      setTicketData(Object.keys(tStats).map(key => ({ 
+        name: key.replace('_', ' ').toUpperCase(), 
+        value: tStats[key] 
+      })));
+
+      // Process ISP Downtime
+      const downtimeByISP = isps.map((isp: any) => {
+        const totalHours = (isp.downtimeRecords || []).reduce((sum: number, r: any) => {
+          const hrs = parseFloat(r.duration || '0');
+          return sum + (isNaN(hrs) ? 0 : hrs);
+        }, 0);
+        return { name: isp.ispName, hours: parseFloat(totalHours.toFixed(1)) };
+      }).filter(i => i.hours > 0);
+      setIspDowntimeData(downtimeByISP);
+
+      // Process tickets by priority trend
+      const sortedTickets = [...tickets].sort((a: any, b: any) => {
+        const ad = a.createdAt?.toMillis?.() || (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0) || (a.createdAt ? new Date(a.createdAt).getTime() : 0) || 0;
+        const bd = b.createdAt?.toMillis?.() || (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0) || (b.createdAt ? new Date(b.createdAt).getTime() : 0) || 0;
+        return ad - bd;
+      });
+
+      const pStats: Record<string, any> = {};
+      sortedTickets.forEach(t => { 
+        let dateStr = 'Unknown';
+        if (t.createdAt?.toDate) {
+          dateStr = format(t.createdAt.toDate(), 'MMM dd');
+        } else if (t.createdAt?.seconds) {
+          dateStr = format(new Date(t.createdAt.seconds * 1000), 'MMM dd');
+        } else if (t.createdAt) {
+          try {
+            dateStr = format(new Date(t.createdAt), 'MMM dd');
+          } catch {
+            dateStr = 'Unknown';
+          }
+        }
+        if (!pStats[dateStr]) {
+          pStats[dateStr] = { date: dateStr, low: 0, medium: 0, high: 0, critical: 0, unassigned: 0 };
+        }
+        const p = (t.priority || 'unassigned').toLowerCase().trim();
+        if (p in pStats[dateStr]) {
+          pStats[dateStr][p]++;
+        } else {
+          pStats[dateStr]['low'] = (pStats[dateStr]['low'] || 0) + 1;
+        }
+      });
+      setTicketPriorityData(Object.values(pStats));
+
+      // Process repairs by status
+      const rStats: Record<string, number> = { pending: 0, ongoing: 0, completed: 0 };
+      repairs.forEach(r => { 
+        const rs = (r.status || 'pending').toLowerCase().trim();
+        if (rs in rStats) rStats[rs]++; 
+      });
+      setRepairData(Object.keys(rStats).map(key => ({ 
+        name: key.toUpperCase(), 
+        value: rStats[key] 
+      })));
+    }
+  }, [tickets, repairs, isps]);
 
   // Helper formatting functions
   const formatDate = (ts: any) => {
@@ -418,7 +323,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Tickets</p>
                 <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.activeT}</p>
                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Total: {metrics.totalT} • Resolved</span>
+                  <span>Total: {metrics.totalT} • Resolved: {metrics.resolvedT}</span>
                   <span className="font-bold text-emerald-600">{metrics.resolutionRate}%</span>
                 </div>
               </div>

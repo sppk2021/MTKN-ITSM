@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { collection, query, getDocs, doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
+import { useAppData } from "../hooks/useAppData";
 import { Link } from "react-router-dom";
 import { 
   Users, Ticket, Wrench, AlertTriangle, Globe, ArrowRight, 
@@ -153,6 +154,7 @@ interface ManagementDashboardProps {
 }
 
 export default function ManagementDashboard({ userRole: propUserRole = "staff", userPermissions }: ManagementDashboardProps = {}) {
+  const { tickets: allTickets, repairs: allRepairs, isps: allISPs, licenses: allLicenses, users: allUsers, loading, refreshData } = useAppData();
   const [stats, setStats] = useState({
     openTickets: 0,
     criticalTickets: 0,
@@ -167,7 +169,6 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
   const [expiringTrackers, setExpiringTrackers] = useState<any[]>([]);
   const [unassignedCriticalTickets, setUnassignedCriticalTickets] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>(propUserRole);
 
   const [heatmapData, setHeatmapData] = useState<any[]>([]);
@@ -181,7 +182,6 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
     upcomingDeadlinesCount: 0,
     urgentCount: 0,
   });
-  const [allUsers, setAllUsers] = useState<any[]>([]);
 
   const projectCompletionData = useMemo(() => {
     const buckets = [
@@ -224,7 +224,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
   }, [schoolProjects]);
 
   useEffect(() => {
-    async function fetchDashboardData() {
+    async function fetchProjects() {
       try {
         const u = auth.currentUser;
         if (u) {
@@ -234,21 +234,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
           }
         }
 
-        const [ticketsSnap, repairsSnap, usersSnap, ispSnap, licensesSnap, projectsSnap] = await Promise.all([
-          getDocs(collection(db, "tickets")),
-          getDocs(collection(db, "repairs")),
-          getDocs(collection(db, "users")),
-          getDocs(collection(db, "isp_accounts")),
-          getDocs(collection(db, "software_licenses")),
-          getDocs(collection(db, "it_projects"))
-        ]);
-        
-        const allTickets = ticketsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const allISPs = ispSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const allRepairs = repairsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const allLicenses = licensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setAllUsers(allUsers);
+        const projectsSnap = await getDocs(collection(db, "it_projects"));
         const allProjects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         const activeProjects = allProjects.filter((p: any) => p.status !== 'deployed' && p.status !== 'maintenance');
@@ -265,179 +251,180 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
           upcomingDeadlinesCount: upcomingDeadlines.length,
           urgentCount: urgentProjects.length,
         });
-
-        const openTickets = allTickets.filter((t: any) => {
-          const s = (t.status || '').toLowerCase().trim();
-          return s !== 'resolved' && s !== 'closed';
-        });
-        const criticalTickets = allTickets.filter((t: any) => {
-          const p = (t.priority || '').toLowerCase().trim();
-          const s = (t.status || '').toLowerCase().trim();
-          return (p === 'critical' || p === 'high') && s !== 'resolved' && s !== 'closed';
-        });
-        const activeRepairs = allRepairs.filter((r: any) => (r.status || '').toLowerCase().trim() === "ongoing");
-        const activeUsers = allUsers.filter((u: any) => (u.status || '').toLowerCase().trim() === "active");
-        const issuesISPs = allISPs.filter((i: any) => (i.currentStatus || '').toLowerCase().trim() !== "online");
-
-        // Calculate licenses/domains expiring within 30 days
-        const expiringSoon = allLicenses.filter((lic: any) => {
-          if (!lic.expiryDate) return false;
-          const days = differenceInDays(new Date(lic.expiryDate), new Date());
-          return days >= 0 && days <= 30;
-        });
-
-        // Find critical tickets that are currently unassigned
-        const unassignedCritical = allTickets.filter((t: any) => {
-          const p = (t.priority || '').toLowerCase().trim();
-          const s = (t.status || '').toLowerCase().trim();
-          return (p === 'critical' || p === 'high') && 
-            (!t.assigneeId || t.assigneeId === "unassigned" || t.assigneeId === "") &&
-            s !== "resolved" && s !== "closed";
-        });
-
-        setStats({
-          openTickets: openTickets.length,
-          criticalTickets: criticalTickets.length,
-          ongoingRepairs: activeRepairs.length,
-          expiringLicenses: expiringSoon.length,
-          activeUsers: activeUsers.length,
-          offlineISPs: issuesISPs.length
-        });
-
-        // Combine activities
-        const combinedActivity: any[] = [];
-        allTickets.forEach((t: any) => {
-          combinedActivity.push({
-            id: t.id,
-            type: 'ticket',
-            title: t.title,
-            status: t.status,
-            date: t.updatedAt || t.createdAt,
-            extraInfo: t.requestDept || 'General',
-            priority: t.priority
-          });
-        });
-        
-        allRepairs.forEach((r: any) => {
-          combinedActivity.push({
-            id: r.id,
-            type: 'repair',
-            title: r.title,
-            status: r.status,
-            date: r.updatedAt || r.createdAt,
-            extraInfo: r.device || 'Hardware',
-            priority: 'medium'
-          });
-        });
-
-        allLicenses.forEach((l: any) => {
-          combinedActivity.push({
-            id: l.id,
-            type: 'license',
-            title: l.name || 'Unknown Software',
-            status: l.status,
-            date: l.createdAt,
-            extraInfo: l.type || 'Software',
-            priority: 'low'
-          });
-        });
-
-        const sortedActivity = combinedActivity.sort((a: any, b: any) => {
-          const ad = a.date?.toMillis?.() || a.date?.seconds * 1000 || (a.date ? new Date(a.date).getTime() : 0) || 0;
-          const bd = b.date?.toMillis?.() || b.date?.seconds * 1000 || (b.date ? new Date(b.date).getTime() : 0) || 0;
-          return bd - ad;
-        });
-
-        setRecentActivity(sortedActivity.slice(0, 8));
-        setOfflineISPs(issuesISPs);
-        setExpiringTrackers(expiringSoon);
-        setUnassignedCriticalTickets(unassignedCritical.slice(0, 4));
-
-        // Group tickets by day for the trend chart
-        const trendMap: Record<string, number> = {};
-        const sortedForTrend = [...allTickets].sort((a: any, b: any) => {
-          const ad = a.createdAt?.toMillis?.() || 0;
-          const bd = b.createdAt?.toMillis?.() || 0;
-          return ad - bd;
-        });
-
-        sortedForTrend.forEach((t: any) => {
-          let dateStr = "";
-          if (t.createdAt?.toDate) {
-            dateStr = format(t.createdAt.toDate(), 'MM/dd');
-          } else if (t.createdAt?.seconds) {
-            dateStr = format(new Date(t.createdAt.seconds * 1000), 'MM/dd');
-          }
-          if (dateStr) {
-            trendMap[dateStr] = (trendMap[dateStr] || 0) + 1;
-          }
-        });
-
-        const trendList = Object.keys(trendMap).map(key => ({
-          date: key,
-          tickets: trendMap[key]
-        }));
-        setChartData(trendList.slice(-7)); // show last 7 active ticket dates
-
-        // Compute Priority Heatmap density data for open/active tickets
-        const activeOpenTickets = allTickets.filter((t: any) => t.status !== "resolved" && t.status !== "closed");
-        const points: any[] = [];
-        const catBreakdown: any[] = [];
-        let maxCatTotal = 0;
-        let peakCat = 'None';
-        let critOrHighTotal = 0;
-
-        CATEGORIES.forEach((cat, xIdx) => {
-          const catObj: any = { category: cat, Low: 0, Medium: 0, High: 0, Critical: 0, total: 0 };
-
-          PRIORITIES.forEach((pri, yIdx) => {
-            const count = activeOpenTickets.filter((t: any) => 
-              normalizeCategory(t.supportType) === cat &&
-              normalizePriority(t.priority) === pri
-            ).length;
-
-            points.push({
-              x: xIdx,
-              y: yIdx,
-              category: cat,
-              priority: pri,
-              count,
-              z: count || 0.1
-            });
-
-            catObj[pri] = count;
-            catObj.total += count;
-
-            if (pri === 'Critical' || pri === 'High') {
-              critOrHighTotal += count;
-            }
-          });
-
-          if (catObj.total > maxCatTotal) {
-            maxCatTotal = catObj.total;
-            peakCat = cat;
-          }
-
-          catBreakdown.push(catObj);
-        });
-
-        setHeatmapData(points);
-        setCategoryBreakdownData(catBreakdown);
-        setHeatmapMetrics({
-          totalOpen: activeOpenTickets.length,
-          peakCategory: peakCat === 'None' && activeOpenTickets.length > 0 ? CATEGORIES[0] : peakCat,
-          peakCount: maxCatTotal,
-          criticalOrHigh: critOrHighTotal
-        });
-
-      } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
-      } finally {
-        setLoading(false);
+      } catch (e) {
+        console.error("Error fetching projects:", e);
       }
     }
-    fetchDashboardData();
+    fetchProjects();
   }, []);
+
+  useEffect(() => {
+    if (allTickets.length > 0 || allRepairs.length > 0 || allISPs.length > 0 || allLicenses.length > 0) {
+      const openTickets = allTickets.filter((t: any) => {
+        const s = (t.status || '').toLowerCase().trim();
+        return s !== 'resolved' && s !== 'closed';
+      });
+      const criticalTickets = allTickets.filter((t: any) => {
+        const p = (t.priority || '').toLowerCase().trim();
+        const s = (t.status || '').toLowerCase().trim();
+        return (p === 'critical' || p === 'high') && s !== 'resolved' && s !== 'closed';
+      });
+      const activeRepairs = allRepairs.filter((r: any) => (r.status || '').toLowerCase().trim() === "ongoing");
+      const activeUsers = allUsers.filter((u: any) => (u.status || '').toLowerCase().trim() === "active");
+      const issuesISPs = allISPs.filter((i: any) => (i.currentStatus || '').toLowerCase().trim() !== "online");
+
+      // Calculate licenses/domains expiring within 30 days
+      const expiringSoon = allLicenses.filter((lic: any) => {
+        if (!lic.expiryDate) return false;
+        const days = differenceInDays(new Date(lic.expiryDate), new Date());
+        return days >= 0 && days <= 30;
+      });
+
+      // Find critical tickets that are currently unassigned
+      const unassignedCritical = allTickets.filter((t: any) => {
+        const p = (t.priority || '').toLowerCase().trim();
+        const s = (t.status || '').toLowerCase().trim();
+        return (p === 'critical' || p === 'high') && 
+          (!t.assigneeId || t.assigneeId === "unassigned" || t.assigneeId === "") &&
+          s !== "resolved" && s !== "closed";
+      });
+
+      setStats({
+        openTickets: openTickets.length,
+        criticalTickets: criticalTickets.length,
+        ongoingRepairs: activeRepairs.length,
+        expiringLicenses: expiringSoon.length,
+        activeUsers: activeUsers.length,
+        offlineISPs: issuesISPs.length
+      });
+
+      // Combine activities
+      const combinedActivity: any[] = [];
+      allTickets.forEach((t: any) => {
+        combinedActivity.push({
+          id: t.id,
+          type: 'ticket',
+          title: t.title,
+          status: t.status,
+          date: t.updatedAt || t.createdAt,
+          extraInfo: t.requestDept || 'General',
+          priority: t.priority
+        });
+      });
+      
+      allRepairs.forEach((r: any) => {
+        combinedActivity.push({
+          id: r.id,
+          type: 'repair',
+          title: r.title,
+          status: r.status,
+          date: r.updatedAt || r.createdAt,
+          extraInfo: r.device || 'Hardware',
+          priority: 'medium'
+        });
+      });
+
+      allLicenses.forEach((l: any) => {
+        combinedActivity.push({
+          id: l.id,
+          type: 'license',
+          title: l.name || 'Unknown Software',
+          status: l.status,
+          date: l.createdAt,
+          extraInfo: l.type || 'Software',
+          priority: 'low'
+        });
+      });
+
+      const sortedActivity = combinedActivity.sort((a: any, b: any) => {
+        const ad = a.date?.toMillis?.() || a.date?.seconds * 1000 || (a.date ? new Date(a.date).getTime() : 0) || 0;
+        const bd = b.date?.toMillis?.() || b.date?.seconds * 1000 || (b.date ? new Date(b.date).getTime() : 0) || 0;
+        return bd - ad;
+      });
+
+      setRecentActivity(sortedActivity.slice(0, 8));
+      setOfflineISPs(issuesISPs);
+      setExpiringTrackers(expiringSoon);
+      setUnassignedCriticalTickets(unassignedCritical.slice(0, 4));
+
+      // Group tickets by day for the trend chart
+      const trendMap: Record<string, number> = {};
+      const sortedForTrend = [...allTickets].sort((a: any, b: any) => {
+        const ad = a.createdAt?.toMillis?.() || 0;
+        const bd = b.createdAt?.toMillis?.() || 0;
+        return ad - bd;
+      });
+
+      sortedForTrend.forEach((t: any) => {
+        let dateStr = "";
+        if (t.createdAt?.toDate) {
+          dateStr = format(t.createdAt.toDate(), 'MM/dd');
+        } else if (t.createdAt?.seconds) {
+          dateStr = format(new Date(t.createdAt.seconds * 1000), 'MM/dd');
+        }
+        if (dateStr) {
+          trendMap[dateStr] = (trendMap[dateStr] || 0) + 1;
+        }
+      });
+
+      const trendList = Object.keys(trendMap).map(key => ({
+        date: key,
+        tickets: trendMap[key]
+      }));
+      setChartData(trendList.slice(-7)); // show last 7 active ticket dates
+
+      // Compute Priority Heatmap density data for open/active tickets
+      const activeOpenTickets = allTickets.filter((t: any) => t.status !== "resolved" && t.status !== "closed");
+      const points: any[] = [];
+      const catBreakdown: any[] = [];
+      let maxCatTotal = 0;
+      let peakCat = 'None';
+      let critOrHighTotal = 0;
+
+      CATEGORIES.forEach((cat, xIdx) => {
+        const catObj: any = { category: cat, Low: 0, Medium: 0, High: 0, Critical: 0, total: 0 };
+
+        PRIORITIES.forEach((pri, yIdx) => {
+          const count = activeOpenTickets.filter((t: any) => 
+            normalizeCategory(t.supportType) === cat &&
+            normalizePriority(t.priority) === pri
+          ).length;
+
+          points.push({
+            x: xIdx,
+            y: yIdx,
+            category: cat,
+            priority: pri,
+            count,
+            z: count || 0.1
+          });
+
+          catObj[pri] = count;
+          catObj.total += count;
+
+          if (pri === 'Critical' || pri === 'High') {
+            critOrHighTotal += count;
+          }
+        });
+
+        if (catObj.total > maxCatTotal) {
+          maxCatTotal = catObj.total;
+          peakCat = cat;
+        }
+
+        catBreakdown.push(catObj);
+      });
+
+      setHeatmapData(points);
+      setCategoryBreakdownData(catBreakdown);
+      setHeatmapMetrics({
+        totalOpen: activeOpenTickets.length,
+        peakCategory: peakCat === 'None' && activeOpenTickets.length > 0 ? CATEGORIES[0] : peakCat,
+        peakCount: maxCatTotal,
+        criticalOrHigh: critOrHighTotal
+      });
+    }
+  }, [allTickets, allRepairs, allISPs, allLicenses, allUsers]);
 
   const cards = [
     { name: 'Active Tickets', value: stats.openTickets, icon: Ticket, color: "text-blue-500", bg: "bg-blue-50", link: "/tickets" },
