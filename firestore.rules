@@ -170,9 +170,8 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get: if isSignedIn() && isValidId(userId);
-      // For preview purposes, we'll allow any signed-in user to list users so the directory works
-      allow list: if isSignedIn();
+      allow read: if true;
+      allow list: if true;
       allow create: if isSignedIn() && (userId == request.auth.uid || isAdmin()) && isValidUser(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && incoming().updatedAt == request.time && (
         isAdmin() ||
@@ -182,35 +181,35 @@ service cloud.firestore {
     }
 
     match /tickets/{ticketId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidTicket(incoming()) && incoming().authorId == request.auth.uid && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(ticketId) && isValidTicket(incoming()) && incoming().updatedAt == request.time;
       allow delete: if isManagement();
     }
 
     match /repairs/{repairId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidRepair(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(repairId) && isValidRepair(incoming()) && incoming().updatedAt == request.time;
       allow delete: if isManagement();
     }
 
     match /calendarEvents/{eventId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidEvent(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(eventId) && isValidEvent(incoming()) && incoming().updatedAt == request.time;
       allow delete: if isManagement();
     }
 
     match /software_licenses/{licenseId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidSoftwareLicense(incoming()) && incoming().authorId == request.auth.uid && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(licenseId) && isValidSoftwareLicense(incoming()) && incoming().updatedAt == request.time;
       allow delete: if isManagement();
     }
 
     match /isp_accounts/{ispId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidISPAccount(incoming()) && incoming().authorId == request.auth.uid && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(ispId) && isValidISPAccount(incoming()) && incoming().updatedAt == request.time;
       allow delete: if isManagement();
@@ -223,28 +222,28 @@ service cloud.firestore {
     }
 
     match /email_alerts_log/{logId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidEmailAlertLog(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(logId) && isValidEmailAlertLog(incoming());
       allow delete: if isManagement();
     }
 
     match /school_projects/{projectId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidSchoolProject(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(projectId) && isValidSchoolProject(incoming()) && incoming().updatedAt == request.time;
       allow delete: if isManagement();
     }
 
     match /project_templates/{templateId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidProjectTemplate(incoming()) && incoming().createdAt == request.time;
       allow update: if isSignedIn() && isValidId(templateId) && isValidProjectTemplate(incoming());
       allow delete: if isManagement();
     }
 
     match /it_projects/{projectId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && isValidITProject(incoming());
       allow update: if isSignedIn() && isValidId(projectId) && isValidITProject(incoming());
       allow delete: if isSignedIn() && isValidId(projectId);
