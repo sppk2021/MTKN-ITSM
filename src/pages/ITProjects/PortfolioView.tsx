@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ITProject, ProjectTemplate, TaskStatus } from './types';
 import { 
   DEFAULT_TEMPLATES, 
-  generateProjectFromTemplate, 
-  generateUserSeedProjects 
+  generateProjectFromTemplate
 } from './templates';
 import { calculateProjectMetrics, STATUS_CONFIG } from './utils';
 import { 
@@ -88,21 +87,7 @@ export default function PortfolioView({ onSelectProject, userRole, userPermissio
   // 1. Fetch & Subscribe to Projects from Firestore
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'it_projects'), async (snapshot) => {
-      if (snapshot.empty) {
-        // Seed default representative projects if collection is empty
-        try {
-          const seeds = generateUserSeedProjects();
-          for (const seed of seeds) {
-            await addDoc(collection(db, 'it_projects'), {
-              ...seed,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp()
-            });
-          }
-        } catch (err) {
-          console.error('Error seeding initial projects:', err);
-        }
-      } else {
+      if (!snapshot.empty) {
         const loadedProjects: ITProject[] = snapshot.docs.map(d => {
           const data = d.data() as any;
           let projType = data.projectType;
@@ -152,6 +137,8 @@ export default function PortfolioView({ onSelectProject, userRole, userPermissio
           };
         });
         setProjects(loadedProjects);
+      } else {
+        setProjects([]);
       }
       setLoading(false);
     }, (error) => {
@@ -455,13 +442,47 @@ export default function PortfolioView({ onSelectProject, userRole, userPermissio
           </p>
         </div>
 
-        <button
-          onClick={() => setShowNewModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm transition-colors flex items-center gap-2 shrink-0 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Create Project
-        </button>
+        <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto">
+          {canDelete && (
+            <button
+              onClick={async () => {
+                if (!window.confirm("Are you sure you want to purge all existing projects? This will give you a clean slate for production. Templates will remain intact.")) return;
+                try {
+                  setIsDeletingProject(true);
+                  const { writeBatch } = await import('firebase/firestore');
+                  const q = collection(db, 'it_projects');
+                  const snap = await getDocs(q);
+                  const batch = writeBatch(db);
+                  let count = 0;
+                  snap.forEach((d) => {
+                    batch.delete(d.ref);
+                    count++;
+                  });
+                  await batch.commit();
+                  alert(`Successfully purged ${count} projects. The system is now ready for production.`);
+                } catch (err) {
+                  console.error('Error purging projects:', err);
+                  alert('Error purging projects. See console.');
+                } finally {
+                  setIsDeletingProject(false);
+                }
+              }}
+              disabled={isDeletingProject}
+              className="bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              title="Purge All Projects"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Purge Data</span>
+            </button>
+          )}
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Project</span>
+          </button>
+        </div>
       </header>
 
       {/* Main Navigation Tabs */}
