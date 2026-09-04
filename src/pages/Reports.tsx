@@ -8,7 +8,7 @@ import {
 import { 
   Download, FileText, Ticket, Wrench, Globe, ShieldAlert, 
   CheckCircle2, AlertTriangle, Clock, Search, TrendingUp, Info,
-  Mail, Settings, Send, Trash2, Check
+  Mail, Settings, Send, Trash2, Check, RefreshCw
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { UserPermissions } from "../types";
@@ -28,7 +28,7 @@ interface ReportsProps {
 }
 
 export default function Reports({ userRole = 'staff', userPermissions }: ReportsProps = {}) {
-  const { tickets, repairs, isps, licenses, users, loading, refreshData } = useAppData();
+  const { tickets, activeTickets, repairs, isps, licenses, users, loading, isRefreshing, refreshData } = useAppData();
   
   const [activeTab, setActiveTab] = useState<'tickets' | 'repairs' | 'isps' | 'licenses' | 'email_alerts'>('tickets');
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,10 +142,22 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
       const s = (t.status || '').toLowerCase().trim();
       return s === 'resolved' || s === 'closed';
     }).length;
-    const activeT = tickets.filter(t => {
-      const s = (t.status || '').toLowerCase().trim();
-      return s !== 'resolved' && s !== 'closed';
+    const activeT = activeTickets.length;
+    const openCount = activeTickets.filter(t => {
+      const s = (t.status || 'open').toLowerCase().trim();
+      return s === 'open' || s === 'new';
     }).length;
+
+    const pendingCount = activeTickets.filter(t => {
+      const s = (t.status || '').toLowerCase().trim();
+      return s === 'pending';
+    }).length;
+
+    const inProgressCount = activeTickets.filter(t => {
+      const s = (t.status || '').toLowerCase().trim();
+      return s === 'in_progress' || s === 'in-process';
+    }).length;
+
     const resolutionRate = totalT ? Math.round((resolvedT / totalT) * 100) : 0;
     
     const activeRepairsCount = repairs.filter(r => (r.status || '').toLowerCase().trim() === 'ongoing').length;
@@ -172,6 +184,9 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
       totalT,
       resolvedT,
       activeT,
+      openCount,
+      pendingCount,
+      inProgressCount,
       resolutionRate,
       activeRepairsCount,
       totalDowntimeHrs: parseFloat(totalDowntimeHrs.toFixed(1)),
@@ -298,6 +313,15 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
           <p className="text-xs text-slate-500 dark:text-slate-400">Comprehensive IT operation analytics, KPI metrics, and exports</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <button 
+            onClick={() => refreshData()} 
+            disabled={isRefreshing || loading}
+            title="Refresh latest operational data"
+            className="px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 transition-colors min-h-[44px] disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 text-blue-600 dark:text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
           <button onClick={exportCSV} className="px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors min-h-[44px]">
             <Download className="w-4 h-4" /> Export CSV ({activeTab.toUpperCase()})
           </button>
@@ -323,7 +347,7 @@ export default function Reports({ userRole = 'staff', userPermissions }: Reports
                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Tickets</p>
                 <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">{metrics.activeT}</p>
                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Total: {metrics.totalT} • Resolved: {metrics.resolvedT}</span>
+                  <span>Active: {metrics.activeT} • Completed: {metrics.resolvedT}</span>
                   <span className="font-bold text-emerald-600">{metrics.resolutionRate}%</span>
                 </div>
               </div>

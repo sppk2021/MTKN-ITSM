@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { 
   Users, Ticket, Wrench, AlertTriangle, Globe, ArrowRight, 
   Clock, ShieldAlert, CheckCircle2, Server, HelpCircle, Activity,
-  Flame, Grid, BarChart3, Layers
+  Flame, Grid, BarChart3, Layers, RefreshCw
 } from "lucide-react";
 import { 
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -154,7 +154,7 @@ interface ManagementDashboardProps {
 }
 
 export default function ManagementDashboard({ userRole: propUserRole = "staff", userPermissions }: ManagementDashboardProps = {}) {
-  const { tickets: allTickets, repairs: allRepairs, isps: allISPs, licenses: allLicenses, users: allUsers, loading, refreshData } = useAppData();
+  const { tickets: allTickets, activeTickets, repairs: allRepairs, isps: allISPs, licenses: allLicenses, users: allUsers, loading, isRefreshing, refreshData } = useAppData();
   const [stats, setStats] = useState({
     openTickets: 0,
     criticalTickets: 0,
@@ -260,14 +260,10 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
 
   useEffect(() => {
     if (allTickets.length > 0 || allRepairs.length > 0 || allISPs.length > 0 || allLicenses.length > 0) {
-      const openTickets = allTickets.filter((t: any) => {
-        const s = (t.status || '').toLowerCase().trim();
-        return s !== 'resolved' && s !== 'closed';
-      });
-      const criticalTickets = allTickets.filter((t: any) => {
+      const openTickets = activeTickets;
+      const criticalTickets = activeTickets.filter((t: any) => {
         const p = (t.priority || '').toLowerCase().trim();
-        const s = (t.status || '').toLowerCase().trim();
-        return (p === 'critical' || p === 'high') && s !== 'resolved' && s !== 'closed';
+        return p === 'critical' || p === 'high';
       });
       const activeRepairs = allRepairs.filter((r: any) => (r.status || '').toLowerCase().trim() === "ongoing");
       const activeUsers = allUsers.filter((u: any) => (u.status || '').toLowerCase().trim() === "active");
@@ -281,12 +277,10 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
       });
 
       // Find critical tickets that are currently unassigned
-      const unassignedCritical = allTickets.filter((t: any) => {
+      const unassignedCritical = activeTickets.filter((t: any) => {
         const p = (t.priority || '').toLowerCase().trim();
-        const s = (t.status || '').toLowerCase().trim();
         return (p === 'critical' || p === 'high') && 
-          (!t.assigneeId || t.assigneeId === "unassigned" || t.assigneeId === "") &&
-          s !== "resolved" && s !== "closed";
+          (!t.assigneeId || t.assigneeId === "unassigned" || t.assigneeId === "");
       });
 
       setStats({
@@ -374,7 +368,7 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
       setChartData(trendList.slice(-7)); // show last 7 active ticket dates
 
       // Compute Priority Heatmap density data for open/active tickets
-      const activeOpenTickets = allTickets.filter((t: any) => t.status !== "resolved" && t.status !== "closed");
+      const activeOpenTickets = activeTickets;
       const points: any[] = [];
       const catBreakdown: any[] = [];
       let maxCatTotal = 0;
@@ -436,13 +430,24 @@ export default function ManagementDashboard({ userRole: propUserRole = "staff", 
 
   return (
     <>
-      <header className="min-h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-0 flex items-center justify-between shrink-0">
+      <header className="min-h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-600" />
             Executive Overview
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">Real-time IT infrastructure and support operations dashboard</p>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button 
+            onClick={() => refreshData()} 
+            disabled={isRefreshing || loading}
+            title="Refresh latest live metrics"
+            className="px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 transition-colors min-h-[44px] disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 text-blue-600 dark:text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
         </div>
       </header>
 

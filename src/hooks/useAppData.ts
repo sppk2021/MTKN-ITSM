@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { 
   getTicketsLocal, getRepairsLocal, getIspLocal, getLicensesLocal, getUsersLocal,
@@ -9,6 +9,7 @@ import {
 // Global memory cache to prevent redundant fetches across component mounts and views
 let globalCache: {
   tickets: any[];
+  activeTickets: any[];
   repairs: any[];
   isps: any[];
   licenses: any[];
@@ -20,16 +21,19 @@ const CACHE_TTL = 30 * 1000; // 30 seconds
 
 export function useAppData() {
   const [tickets, setTickets] = useState<any[]>(globalCache?.tickets || []);
+  const [activeTickets, setActiveTickets] = useState<any[]>(globalCache?.activeTickets || []);
   const [repairs, setRepairs] = useState<any[]>(globalCache?.repairs || []);
   const [isps, setIsps] = useState<any[]>(globalCache?.isps || []);
   const [licenses, setLicenses] = useState<any[]>(globalCache?.licenses || []);
   const [users, setUsers] = useState<any[]>(globalCache?.users || []);
   const [loading, setLoading] = useState<boolean>(!globalCache);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const fetchData = useCallback(async (forceRefresh = false) => {
     try {
       if (!forceRefresh && globalCache && (Date.now() - globalCache.fetchedAt < CACHE_TTL)) {
         setTickets(globalCache.tickets);
+        setActiveTickets(globalCache.activeTickets);
         setRepairs(globalCache.repairs);
         setIsps(globalCache.isps);
         setLicenses(globalCache.licenses);
@@ -38,28 +42,45 @@ export function useAppData() {
         return;
       }
 
-      setLoading(true);
-
-      // Try loading from local IndexedDB first for instant UI response
-      const [cachedTickets, cachedRepairs, cachedIsps, cachedLicenses, cachedUsers] = await Promise.all([
-        getTicketsLocal(),
-        getRepairsLocal(),
-        getIspLocal(),
-        getLicensesLocal(),
-        getUsersLocal()
-      ]);
-
-      if (!globalCache && cachedTickets.length > 0) {
-        setTickets(cachedTickets);
-        setRepairs(cachedRepairs);
-        setIsps(cachedIsps);
-        setLicenses(cachedLicenses);
-        setUsers(cachedUsers);
-        setLoading(false);
+      if (forceRefresh) {
+        setIsRefreshing(true);
+      } else if (!globalCache) {
+        setLoading(true);
       }
 
-      // Fetch fresh data from Firestore using identical efficient queries shared between Executive Overview & Reports
-      const [ticketsSnap, repairsSnap, usersSnap, ispSnap, licensesSnap] = await Promise.all([
+      // Try loading from local IndexedDB first for instant UI response
+      if (!forceRefresh && !globalCache) {
+        const [cachedTickets, cachedRepairs, cachedIsps, cachedLicenses, cachedUsers] = await Promise.all([
+          getTicketsLocal(),
+          getRepairsLocal(),
+          getIspLocal(),
+          getLicensesLocal(),
+          getUsersLocal()
+        ]);
+
+        if (cachedTickets.length > 0) {
+          setTickets(cachedTickets);
+          const cachedActive = cachedTickets.filter((t: any) => {
+            const s = (t.status || 'open').toLowerCase().trim().replace(/[\s-]/g, '_');
+            return s === 'open' || s === 'new' || s === 'pending' || s === 'in_progress';
+          });
+          setActiveTickets(cachedActive);
+          setRepairs(cachedRepairs);
+          setIsps(cachedIsps);
+          setLicenses(cachedLicenses);
+          setUsers(cachedUsers);
+          setLoading(false);
+        }
+      }
+
+      // Centralized Firestore queries utilizing database-level 'where' clause for active operational workload
+      const activeTicketsQuery = query(
+        collection(db, "tickets"),
+        where("status", "in", ["open", "pending", "in_progress", "in-process", "new"])
+      );
+
+      const [activeTicketsSnap, allTicketsSnap, repairsSnap, usersSnap, ispSnap, licensesSnap] = await Promise.all([
+        getDocs(activeTicketsQuery),
         getDocs(collection(db, "tickets")),
         getDocs(collection(db, "repairs")),
         getDocs(collection(db, "users")),
@@ -67,7 +88,8 @@ export function useAppData() {
         getDocs(collection(db, "software_licenses"))
       ]);
 
-      const fetchedTickets = ticketsSnap.docs.map(t => ({ id: t.id, ...t.data() } as any));
+      const fetchedActiveTickets = activeTicketsSnap.docs.map(t => ({ id: t.id, ...t.data() } as any));
+      const fetchedTickets = allTicketsSnap.docs.map(t => ({ id: t.id, ...t.data() } as any));
       const fetchedRepairs = repairsSnap.docs.map(r => ({ id: r.id, ...r.data() } as any));
       const fetchedUsers = usersSnap.docs.map(u => ({ id: u.id, ...u.data() } as any));
       const fetchedIsps = ispSnap.docs.map(i => ({ id: i.id, ...i.data() } as any));
@@ -75,6 +97,7 @@ export function useAppData() {
 
       globalCache = {
         tickets: fetchedTickets,
+        activeTickets: fetchedActiveTickets,
         repairs: fetchedRepairs,
         isps: fetchedIsps,
         licenses: fetchedLicenses,
@@ -83,6 +106,7 @@ export function useAppData() {
       };
 
       setTickets(fetchedTickets);
+      setActiveTickets(fetchedActiveTickets);
       setRepairs(fetchedRepairs);
       setIsps(fetchedIsps);
       setLicenses(fetchedLicenses);
@@ -107,7 +131,13 @@ export function useAppData() {
           getLicensesLocal(),
           getUsersLocal()
         ]);
-        if (cachedTickets.length > 0) setTickets(cachedTickets);
+        if (cachedTickets.length > 0) {
+          setTickets(cachedTickets);
+          setActiveTickets(cachedTickets.filter((t: any) => {
+            const s = (t.status || 'open').toLowerCase().trim().replace(/[\s-]/g, '_');
+            return s === 'open' || s === 'new' || s === 'pending' || s === 'in_progress';
+          }));
+        }
         if (cachedRepairs.length > 0) setRepairs(cachedRepairs);
         if (cachedIsps.length > 0) setIsps(cachedIsps);
         if (cachedLicenses.length > 0) setLicenses(cachedLicenses);
@@ -117,8 +147,13 @@ export function useAppData() {
       }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
+
+  const refreshData = useCallback(() => {
+    return fetchData(true);
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();
@@ -126,11 +161,13 @@ export function useAppData() {
 
   return {
     tickets,
+    activeTickets,
     repairs,
     isps,
     licenses,
     users,
     loading,
-    refreshData: () => fetchData(true)
+    isRefreshing,
+    refreshData
   };
 }
