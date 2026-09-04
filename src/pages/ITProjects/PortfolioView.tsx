@@ -63,6 +63,7 @@ export default function PortfolioView({ onSelectProject, userRole, userPermissio
 
   // Deletion permissions & state
   const canDelete = userRole === 'admin' || (userPermissions ? !!userPermissions?.projects?.delete : true);
+  const canEdit = userRole === 'admin' || (userPermissions ? !!userPermissions?.projects?.edit : true);
   const [projectToDelete, setProjectToDelete] = useState<ITProject | null>(null);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
 
@@ -475,13 +476,13 @@ export default function PortfolioView({ onSelectProject, userRole, userPermissio
               <span className="hidden sm:inline">Purge Data</span>
             </button>
           )}
-          <button
-            onClick={() => setShowNewModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+          {canEdit && (<button
+              onClick={() => setShowNewModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create Project</span>
-          </button>
+          </button>)}
         </div>
       </header>
 

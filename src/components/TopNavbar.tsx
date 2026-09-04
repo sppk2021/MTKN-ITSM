@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Search, Command, LayoutDashboard, Users, BarChart3, 
   CalendarDays, Wrench, Ticket, Server, Globe, FolderKanban,
@@ -30,6 +30,7 @@ export function TopNavbar({
   toggleTheme
 }: TopNavbarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Determine current page metadata
   const getPageInfo = () => {
@@ -132,24 +133,34 @@ export function TopNavbar({
           {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
         </button>
 
-        {/* Quick Profile Avatar */}
-        <button
-          type="button"
-          onClick={onOpenProfile}
-          className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-          title="Open User Profile & Settings"
-        >
-          <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
-            {photoURL ? (
-              <img src={photoURL} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            ) : (
-              userInitials
-            )}
-          </div>
-          <span className="hidden xl:inline-block text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-[100px] truncate">
-            {displayName || userEmail?.split('@')[0] || "Profile"}
-          </span>
-        </button>
+        {/* Quick Profile Avatar or Login Button */}
+        {userRole === 'guest' ? (
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer text-xs font-semibold shadow-sm"
+          >
+            Sign In
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+            title="Open User Profile & Settings"
+          >
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
+              {photoURL ? (
+                <img src={photoURL} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                userInitials
+              )}
+            </div>
+            <span className="hidden xl:inline-block text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-[100px] truncate">
+              {displayName || userEmail?.split('@')[0] || "Profile"}
+            </span>
+          </button>
+        )}
       </div>
     </header>
   );

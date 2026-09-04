@@ -46,6 +46,7 @@ export default function ProjectDetailView({
 
   // Deletion state & permissions
   const canDelete = userRole === 'admin' || (userPermissions ? !!userPermissions?.projects?.delete : true);
+  const canEdit = userRole === 'admin' || (userPermissions ? !!userPermissions?.projects?.edit : true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -262,8 +263,7 @@ export default function ProjectDetailView({
               />
             </div>
           </div>
-
-          <button
+          {canEdit && <button
             type="button"
             onClick={() => {
               setEditFormData({
@@ -282,7 +282,7 @@ export default function ProjectDetailView({
           >
             <Edit3 className="w-4 h-4 text-blue-500 group-hover:text-white transition-colors" />
             <span className="font-semibold">Edit Info</span>
-          </button>
+          </button>}
 
           {canDelete && (
             <button
@@ -382,7 +382,7 @@ export default function ProjectDetailView({
                   </h2>
                 </div>
                 {!isEditingFocus ? (
-                  <button
+                  canEdit && <button
                     onClick={() => setIsEditingFocus(true)}
                     className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1.5"
                   >
@@ -518,13 +518,13 @@ export default function ProjectDetailView({
                   <FileText className="w-4 h-4 text-blue-500" />
                   Project Notes & Documentation
                 </h3>
-                <button
+                {canEdit && (<button
                   onClick={handleSaveNotes}
                   disabled={isSavingNotes}
                   className="text-xs font-bold px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                 >
                   {isSavingNotes ? 'Saving...' : 'Save Notes'}
-                </button>
+                </button>)}
               </div>
               <textarea
                 rows={4}
@@ -646,7 +646,7 @@ export default function ProjectDetailView({
               </p>
 
               {/* Add Activity Input */}
-              <div className="flex items-center gap-2 mb-6">
+              {canEdit && (<div className="flex items-center gap-2 mb-6">
                 <input
                   type="text"
                   value={newActivityText}
@@ -661,8 +661,7 @@ export default function ProjectDetailView({
                 >
                   Add Entry
                 </button>
-              </div>
-
+              </div>)}
               {/* Activity Timeline */}
               <div className="space-y-4">
                 {(project.activityLog || []).length === 0 ? (

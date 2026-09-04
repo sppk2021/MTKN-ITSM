@@ -546,6 +546,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                             <option value="management">Management</option>
                             <option value="it_assistant">IT Assistant</option>
                             <option value="staff">Staff</option>
+                            <option value="project_manager">Project Manager</option>
                           </select>
                         ) : (
                           <span className="font-semibold text-slate-700 dark:text-slate-300 uppercase text-[11px]">{user.role}</span>
@@ -780,6 +781,7 @@ export default function UsersPage({ userRole = 'admin', userPermissions }: Users
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[42px] font-medium"
                   >
                     <option value="staff">Staff</option>
+                            <option value="project_manager">Project Manager</option>
                     <option value="it_assistant">IT Assistant</option>
                     <option value="management">Management</option>
                     <option value="admin">Admin</option>

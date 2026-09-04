@@ -1,5 +1,5 @@
 
-export type UserRole = 'admin' | 'management' | 'it_assistant' | 'staff';
+export type UserRole = 'admin' | 'management' | 'it_assistant' | 'staff' | 'guest' | 'project_manager';
 
 export type TabKey = 'dashboard' | 'users' | 'reports' | 'calendar' | 'repairs' | 'tickets' | 'software' | 'isp' | 'projects';
 
@@ -67,6 +67,28 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     software: { view: false, edit: false, delete: false },
     isp: { view: false, edit: false, delete: false },
     projects: { view: true, edit: false, delete: false },
+  },
+  guest: {
+    dashboard: { view: true, edit: false, delete: false },
+    users: { view: false, edit: false, delete: false },
+    reports: { view: true, edit: false, delete: false },
+    calendar: { view: false, edit: false, delete: false },
+    repairs: { view: false, edit: false, delete: false },
+    tickets: { view: false, edit: false, delete: false },
+    software: { view: false, edit: false, delete: false },
+    isp: { view: false, edit: false, delete: false },
+    projects: { view: true, edit: false, delete: false },
+  },
+project_manager: {
+    dashboard: { view: false, edit: false, delete: false },
+    users: { view: false, edit: false, delete: false },
+    reports: { view: false, edit: false, delete: false },
+    calendar: { view: false, edit: false, delete: false },
+    repairs: { view: false, edit: false, delete: false },
+    tickets: { view: false, edit: false, delete: false },
+    software: { view: false, edit: false, delete: false },
+    isp: { view: false, edit: false, delete: false },
+    projects: { view: true, edit: true, delete: false },
   },
 };
 

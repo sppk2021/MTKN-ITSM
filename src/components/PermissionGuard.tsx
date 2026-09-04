@@ -38,12 +38,12 @@ export function PermissionGuard({
     if (tabPerm && tabPerm[action]) {
       return <>{children}</>;
     }
-    return <Navigate to={fallbackPath} replace />;
+    return <Navigate to={userRole === 'guest' ? '/login' : fallbackPath} replace />;
   }
 
   // Fallback to allowedRoles if provided
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    return <Navigate to={fallbackPath} replace />;
+    return <Navigate to={userRole === 'guest' ? '/login' : fallbackPath} replace />;
   }
   
   return <>{children}</>;
